@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-03-10 19:57:20",
+  "base_url": "http://127.0.0.1:8013/api",
+  "health": {
+    "benchmark": "module2_health",
+    "total_requests": 5,
+    "success": 5,
+    "fail": 0,
+    "success_rate_pct": 100.0,
+    "duration_s": 0.01,
+    "throughput_rps": 589.41,
+    "p50_ms": 6.33,
+    "p95_ms": 6.44,
+    "avg_ms": 4.39
+  },
+  "case_ops": {
+    "benchmark": "module2_case_ops",
+    "total_requests": 5,
+    "success": 5,
+    "fail": 0,
+    "success_rate_pct": 100.0,
+    "duration_s": 0.02,
+    "throughput_rps": 294.83,
+    "p50_ms": 14.57,
+    "p95_ms": 14.97,
+    "avg_ms": 9.6
+  },
+  "async": {
+    "benchmark": "module2_async_research_submit",
+    "total_requests": 5,
+    "success": 5,
+    "fail": 0,
+    "success_rate_pct": 100.0,
+    "duration_s": 0.01,
+    "throughput_rps": 620.58,
+    "p50_ms": 0.84,
+    "p95_ms": 1.24,
+    "avg_ms": 0.92,
+    "poll_p50_ms": 0.67,
+    "poll_p95_ms": 0.77,
+    "tracked_jobs": 5
+  }
+}
