@@ -102,7 +102,7 @@ async function parseResponse(res) {
   return data;
 }
 
-async function apiRequest(path, options = {}, timeoutMs = 60000) {
+async function apiRequest(path, options = {}, timeoutMs = 180000) {
   let lastError = null;
 
   for (const base of API_CANDIDATE_BASES) {
@@ -381,6 +381,29 @@ export async function runModule2EscalationSweep() {
 
 export async function getModule2DecisionPack(caseId) {
   return apiRequest(`/module2/cases/${caseId}/decision-pack`, {
+    headers: withAuthHeaders(),
+  });
+}
+
+/**
+ * Portfolio & Knowledge Hub APIs
+ */
+export async function getPortfolioData() {
+  return apiRequest('/analytics/portfolio', {
+    headers: withAuthHeaders(),
+  });
+}
+
+export async function getKnowledgeHubResponse(query) {
+  return apiRequest('/analytics/knowledge/query', {
+    method: 'POST',
+    headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query }),
+  });
+}
+
+export async function getPeerBenchmarking(companyName) {
+  return apiRequest(`/analytics/peer-benchmarking?companyName=${encodeURIComponent(companyName)}`, {
     headers: withAuthHeaders(),
   });
 }

@@ -175,8 +175,9 @@ public class Module2Controller {
         @PostMapping("/research/from-module1")
         public ResponseEntity<ApiResponse<ResearchResponse>> researchFromModule1() {
         try {
-            ResponseEntity<ApiResponse<Module1DataResponse>> m1 = getModule1Data();
-            Module1DataResponse seed = m1.getBody() != null ? m1.getBody().getData() : null;
+            ResponseEntity<ApiResponse<Module1DataResponse>> m1Response = getModule1Data();
+            ApiResponse<Module1DataResponse> body = m1Response != null ? m1Response.getBody() : null;
+            Module1DataResponse seed = (body != null && body.getData() != null) ? body.getData() : null;
 
             if (seed == null || seed.getCompanyName() == null || seed.getCompanyName().isBlank()) {
             return ResponseEntity.badRequest().body(

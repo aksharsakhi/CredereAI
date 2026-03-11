@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-export default function SettingsPanel({ theme, onThemeChange, llmSettings, onSaveLlmSettings }) {
+export default function SettingsPanel({ 
+  theme, 
+  onThemeChange, 
+  llmSettings, 
+  onSaveLlmSettings, 
+  user, 
+  onLogout, 
+  onGoHome 
+}) {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [alertThreshold, setAlertThreshold] = useState(15);
   const [selectedProvider, setSelectedProvider] = useState('gemini');
@@ -46,7 +54,22 @@ export default function SettingsPanel({ theme, onThemeChange, llmSettings, onSav
 
   return (
     <section className="panel">
-      <h2>Settings</h2>
+      <h2>System Settings</h2>
+      
+      <div className="card">
+        <h3>System Status</h3>
+        <div className="op-bar" style={{ margin: '1rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span className="chip chip-ok">Backend Online</span>
+          <span className="chip chip-unknown">LLM: {llmSettings.provider} / {llmSettings.activeModel}</span>
+          <span className="chip chip-low">Mode: Production Preview</span>
+          <span className="chip chip-unknown">User: {user?.fullName || user?.username}</span>
+        </div>
+        <div className="actions" style={{ marginTop: '1rem' }}>
+          <button className="secondary" onClick={onGoHome}>Go to Home Page</button>
+          <button className="secondary" onClick={onLogout}>Logout Session</button>
+        </div>
+      </div>
+
       <div className="card">
         <h3>Platform Preferences</h3>
         <div className="form-grid">

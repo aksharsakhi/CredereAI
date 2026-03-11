@@ -24,6 +24,18 @@ export default function Sidebar({ active, onChange, user, onLogout }) {
         Decision Studio
       </button>
       <button
+        className={active === 'portfolio' ? 'nav-btn active' : 'nav-btn'}
+        onClick={() => onChange('portfolio')}
+      >
+        Portfolio Analytics
+      </button>
+      <button
+        className={active === 'knowledge' ? 'nav-btn active' : 'nav-btn'}
+        onClick={() => onChange('knowledge')}
+      >
+        AI Knowledge Hub
+      </button>
+      <button
         className={active === 'history' ? 'nav-btn active' : 'nav-btn'}
         onClick={() => onChange('history')}
       >

@@ -67,6 +67,31 @@ public class PdfProcessorService {
         boolean fastMode = pageCount > 250 || text.length() > 220_000;
         ExtractedFinancialData extractedData = understandingEngine.extractFinancialData(text, category, !fastMode);
         extractedData.setSourceDocument(filename);
+
+        // Auto-detect refinement: if user chose auto_detect, use the type identified by LLM
+        String finalCategory = category;
+        if ("auto_detect".equals(category) && extractedData.getDocumentType() != null) {
+            String detected = extractedData.getDocumentType().toLowerCase().trim().replace(" ", "_");
+            // Validate if detected category is known, else fallback to a generic one or stay auto_detect
+            if (Module1Config.DOCUMENT_CATEGORIES.containsKey(detected) && !"auto_detect".equals(detected)) {
+                finalCategory = detected;
+                log.info("AI Auto-detected category for {}: {}", filename, finalCategory);
+            } else {
+                // If it's a known label but not a key, try to find the key
+                for (Map.Entry<String, String> entry : Module1Config.DOCUMENT_CATEGORIES.entrySet()) {
+                    if (entry.getValue().toLowerCase().contains(detected)) {
+                        finalCategory = entry.getKey();
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If still auto_detect and LLM failed to give a valid one, default to annual_report or stay as is
+        if ("auto_detect".equals(finalCategory)) {
+             finalCategory = "annual_report"; // Default fallback
+        }
+
         if (fastMode) {
             List<String> warnings = extractedData.getWarnings() == null ? new ArrayList<>() : new ArrayList<>(extractedData.getWarnings());
             warnings.add("Fast-mode extraction enabled for large document; deterministic parser prioritized.");
@@ -77,7 +102,7 @@ public class PdfProcessorService {
         if (countCoreFields(extractedData) < 3) {
             Map<String, String> sections = pdfUtils.extractFinancialSections(text);
             String focusedText = buildFocusedText(text, sections);
-            ExtractedFinancialData retryData = understandingEngine.extractFinancialData(focusedText, category, !fastMode);
+            ExtractedFinancialData retryData = understandingEngine.extractFinancialData(focusedText, finalCategory, !fastMode);
             retryData.setSourceDocument(filename);
             extractedData = mergeExtractedData(extractedData, retryData);
         }
@@ -86,7 +111,7 @@ public class PdfProcessorService {
         UploadedDocument doc = UploadedDocument.builder()
                 .id(documentId)
                 .filename(filename)
-                .category(category)
+                .category(finalCategory)
                 .fileSize(file.getSize())
                 .pageCount(pageCount)
                 .textLength(text.length())
@@ -98,7 +123,7 @@ public class PdfProcessorService {
         return ExtractionResponse.builder()
                 .documentId(documentId)
                 .filename(filename)
-                .category(category)
+                .category(finalCategory)
                 .pageCount(pageCount)
                 .textLength(text.length())
                 .extractedData(extractedData)

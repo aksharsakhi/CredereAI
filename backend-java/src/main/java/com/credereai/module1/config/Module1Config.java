@@ -27,6 +27,7 @@ public class Module1Config {
 
     // Document categories
     public static final Map<String, String> DOCUMENT_CATEGORIES = Map.of(
+            "auto_detect", "✨ Auto-Detect (AI)",
             "annual_report", "Annual Report",
             "financial_statement", "Financial Statement",
             "bank_statement", "Bank Statement",

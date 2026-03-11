@@ -293,20 +293,76 @@ body {
 }
 
 .workflow-lane {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  margin-top: 1.5rem;
+  padding: 0 10px;
 }
 
-.workflow-lane span {
-  text-align: center;
-  background: color-mix(in srgb, var(--brand) 14%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--brand) 34%, var(--line));
-  padding: 8px;
-  border-radius: 10px;
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
+.step-node {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: 700;
-  color: color-mix(in srgb, var(--brand) 82%, var(--text));
+  color: var(--muted);
+  transition: all 0.3s ease;
+}
+
+.workflow-step.active .step-node {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 20%, transparent);
+}
+
+.workflow-step.completed .step-node {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.workflow-connector {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--line);
+  z-index: 1;
+  margin: 0 40px;
+}
+
+.connector-fill {
+  height: 100%;
+  background: var(--brand);
+  transition: width 0.5s ease;
 }
 
 .compact-note p {
@@ -1094,3 +1150,260 @@ pre {
     font-size: 28px;
   }
 }
+
+/* Decision Studio Enhancements */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.studio-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.studio-section-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .studio-section-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.studio-metrics .kpi-card {
+  border-left: 4px solid var(--brand-2);
+}
+
+.secondary-card {
+  background: color-mix(in srgb, var(--surface) 85%, var(--bg-alt));
+  border-style: dashed;
+}
+
+.recommendation-section {
+  border-top: 4px solid var(--ok);
+  background: color-mix(in srgb, var(--ok) 8%, var(--surface));
+}
+
+.recommendation-section .kpi-card.highlight {
+  background: color-mix(in srgb, var(--ok) 14%, var(--surface));
+  border-color: var(--ok);
+}
+
+.risk-item {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.action-li {
+  border-left: 3px solid var(--ok);
+  padding-left: 8px;
+  margin-bottom: 8px;
+  list-style: none;
+}
+
+.studio-sections .card h3 {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* Decision Studio Premium Enhancements */
+.studio-sections .card {
+  border: 1px solid var(--line);
+  padding: 24px;
+}
+
+.studio-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.risk-summary-gauge {
+  width: 140px;
+  height: 140px;
+  position: relative;
+  margin: 0 auto 1rem;
+}
+
+.gauge-svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.gauge-bg {
+  fill: none;
+  stroke: var(--bg-alt);
+  stroke-width: 8;
+}
+
+.gauge-fill {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 8;
+  stroke-dasharray: 251.2;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.gauge-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.gauge-text strong {
+  display: block;
+  font-size: 24px;
+  color: var(--text);
+}
+
+.gauge-text span {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.metric-progress {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-alt);
+  border-radius: 999px;
+  margin: 0 12px;
+  overflow: hidden;
+}
+
+.metric-p-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  border-radius: 999px;
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 40px;
+  text-align: right;
+}
+
+.scenario-card-premium {
+  padding: 20px;
+  border-left: 4px solid var(--muted);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+}
+
+.scenario-card-premium.stable { border-color: var(--ok); }
+.scenario-card-premium.warning { border-color: var(--warn); }
+.scenario-card-premium.alert { border-color: var(--danger); }
+
+.scenario-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.s-stat {
+  display: grid;
+  gap: 2px;
+}
+
+.s-stat span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.s-stat strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.recommendation-impact {
+  border-radius: 12px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--brand) 5%, var(--surface));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Portfolio Panel Styles */
+.portfolio-panel .tab-count {
+  background: var(--bg-alt);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 8px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.portfolio-panel .tab-btn.active .tab-count {
+  background: color-mix(in srgb, var(--ok) 20%, transparent);
+  color: var(--ok);
+}
+
+.kpi-trend {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.kpi-trend.pos { color: var(--ok); }
+.kpi-trend.neg { color: var(--danger); }
+
+.p-mini-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-alt);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.p-mini-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.health-viz-premium .metric-progress {
+  height: 12px;
+}
+
+.insight-grid .card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-grid .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+

@@ -16,6 +16,7 @@ import {
 } from '../api/client';
 
 const categories = [
+  { value: 'auto_detect', label: '✨ Auto-Detect (AI)' },
   { value: 'annual_report', label: 'Annual Report' },
   { value: 'financial_statement', label: 'Financial Statement' },
   { value: 'bank_statement', label: 'Bank Statement' },
@@ -26,7 +27,7 @@ const categories = [
 export default function Module1Panel({ user }) {
   const maxUploadMb = 200;
   const [file, setFile] = useState(null);
-  const [category, setCategory] = useState('annual_report');
+  const [category, setCategory] = useState('auto_detect');
   const [documents, setDocuments] = useState([]);
   const [completeness, setCompleteness] = useState(null);
   const [fullAnalysis, setFullAnalysis] = useState(null);
@@ -192,45 +193,51 @@ export default function Module1Panel({ user }) {
 
   return (
     <section className="panel">
-      <h2>Financial Intake</h2>
+      <div className="panel-header">
+        <div>
+          <h2>Financial IQ & Intake</h2>
+          <p className="muted-note">High-fidelity extraction and automated fraud detection for enterprise credit assets.</p>
+        </div>
+        <div className="actions">
+          <button onClick={handleFullAnalysis} disabled={loading} className="primary">
+            {loading ? 'Analyzing...' : 'Run Full Synthesis'}
+          </button>
+          <button className="secondary" onClick={refresh} disabled={loading}>Refresh All</button>
+          <button className="secondary" onClick={handleReset} disabled={loading}>Reset</button>
+        </div>
+      </div>
 
       <div className="module1-layout">
         <div className="module1-left">
-          <form onSubmit={handleUpload} className="card form-grid">
-            <label>
-              Document Category
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                {categories.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              PDF file
-              <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            </label>
-            <button type="submit" disabled={!file || loading}>
-              {loading ? 'Processing...' : 'Upload and Process'}
-            </button>
-          </form>
-
-          <div className="card compact-note ingest-note">
-            <strong>Ingestion Rules</strong>
-            <p>Supported: Annual Reports, GST Filings, Bank Statements, Financial Statements, Rating Reports.</p>
-            <p>Max upload: 200MB | Server hard limit: 220MB</p>
-            {file ? <p>Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(1)}MB)</p> : null}
-          </div>
-
           <div className="card">
-            <h3>Control Actions</h3>
-            <div className="actions">
-              <button onClick={handleFullAnalysis} disabled={loading}>Run Full Analysis</button>
-              <button className="secondary" onClick={refresh} disabled={loading}>Refresh</button>
-              <button className="secondary" onClick={handleReset} disabled={loading}>Reset</button>
+            <h3>Document Ingestion</h3>
+            <form onSubmit={handleUpload} className="form-grid">
+              <label className="full-width">
+                Category
+                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {categories.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                {category === 'auto_detect' && (
+                  <p style={{fontSize: '11px', color: 'var(--brand)', marginTop: '4px', fontWeight: 600}}>
+                    AI will automatically identify document structure and classification.
+                  </p>
+                )}
+              </label>
+              <label className="full-width">
+                PDF Upload
+                <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              </label>
+              <button type="submit" disabled={!file || loading} className="full-width">
+                {loading ? 'Processing Pipeline...' : 'Upload & Process'}
+              </button>
+            </form>
+            <div className="ingest-note" style={{marginTop: '1.5rem', padding: '1rem', background: 'color-mix(in srgb, var(--brand) 8%, var(--surface))', borderRadius: '12px'}}>
+              <strong>Pipeline Capabilities:</strong>
+              <p style={{fontSize: '12px', marginTop: '0.5rem'}}>Supports multi-page Annual Reports, GST-3B/GSTR-1, and 6-month Bank Statements. Advanced OCR and Table Extraction enabled.</p>
+              {historyMessage ? <p className="muted-note" style={{marginTop: '0.5rem'}}>{historyMessage}</p> : null}
             </div>
-            {historyMessage ? <p className="muted-note">{historyMessage}</p> : null}
           </div>
 
           <div className="card">

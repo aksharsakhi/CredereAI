@@ -7,6 +7,8 @@ import SettingsPanel from './components/SettingsPanel';
 import IntroPage from './components/IntroPage';
 import LoginPage from './components/LoginPage';
 import HistoryPanel from './components/HistoryPanel';
+import PortfolioPanel from './components/PortfolioPanel';
+import KnowledgePanel from './components/KnowledgePanel';
 import {
   getCurrentUser,
   getSystemLlmProviderSettings,
@@ -125,30 +127,13 @@ export default function App() {
         <header className="header">
           <div>
             <h1>Credere AI Credit Workspace</h1>
-            <p>
-              Enterprise credit intelligence on Java (Spring Boot): ingest, investigate, detect fraud signals, and
-              generate explainable lending recommendations.
-            </p>
-          </div>
-          <div className="op-bar">
-            <span className="chip chip-ok">Backend Online</span>
-            <span className="chip chip-unknown">LLM: {llmSettings.provider} / {llmSettings.activeModel}</span>
-            <span className="chip chip-low">Mode: Production Preview</span>
-            <span className="chip chip-unknown">User: {user?.fullName || user?.username}</span>
-            <button className="secondary header-toggle" onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}>
-              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </button>
-            <button className="secondary header-toggle" onClick={handleLogout}>
-              Logout
-            </button>
-            <button className="secondary header-toggle" onClick={() => setStarted(false)}>
-              Home
-            </button>
           </div>
         </header>
         {active === 'module1' ? <Module1Panel user={user} /> : null}
         {active === 'module2' ? <Module2Panel /> : null}
         {active === 'module3' ? <Module3Panel /> : null}
+        {active === 'portfolio' ? <PortfolioPanel /> : null}
+        {active === 'knowledge' ? <KnowledgePanel /> : null}
         {active === 'history' ? <HistoryPanel /> : null}
         {active === 'settings' ? (
           <SettingsPanel
@@ -156,6 +141,9 @@ export default function App() {
             onThemeChange={setTheme}
             llmSettings={llmSettings}
             onSaveLlmSettings={handleSaveLlmSettings}
+            user={user}
+            onLogout={handleLogout}
+            onGoHome={() => setStarted(false)}
           />
         ) : null}
       </main>
