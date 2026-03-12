@@ -32,7 +32,8 @@ public class Module1Config {
             "financial_statement", "Financial Statement",
             "bank_statement", "Bank Statement",
             "gst_filing", "GST Filing",
-            "rating_report", "Rating Agency Report"
+            "rating_report", "Rating Agency Report",
+            "other", "Other Document"
     );
 
     // Required financial fields with source docs

@@ -10,11 +10,19 @@ import com.credereai.module1.models.Responses.*;
 import com.credereai.module1.utils.PdfUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +52,7 @@ public class PdfProcessorService {
 
         String documentId = UUID.randomUUID().toString();
         String filename = file.getOriginalFilename();
+        String extension = getExtension(filename);
 
         // Save file
         File uploadDir = new File(config.getUploadDir());
@@ -51,14 +60,14 @@ public class PdfProcessorService {
         File savedFile = new File(uploadDir, documentId + "_" + filename);
         file.transferTo(savedFile);
 
-        int pageCount = pdfUtils.getPageCount(savedFile);
-        String text = extractTextForProcessing(savedFile, pageCount);
+        int pageCount = "pdf".equals(extension) ? pdfUtils.getPageCount(savedFile) : 1;
+        String text = extractTextForProcessing(savedFile, pageCount, extension);
 
         if (pageCount > 1500) {
             throw new IllegalArgumentException("Document exceeds safe processing page limit (1500 pages).");
         }
         if (text == null || text.isBlank()) {
-            throw new IllegalArgumentException("No extractable text found in the uploaded PDF.");
+            throw new IllegalArgumentException("No extractable text found in the uploaded document.");
         }
 
         log.info("Processing {} - {} pages, {} chars", filename, pageCount, text.length());
@@ -130,7 +139,11 @@ public class PdfProcessorService {
                 .build();
     }
 
-    private String extractTextForProcessing(File file, int pageCount) throws IOException {
+    private String extractTextForProcessing(File file, int pageCount, String extension) throws IOException {
+        if (!"pdf".equals(extension)) {
+            return extractTextFromOfficeDocument(file, extension);
+        }
+
         // Large annual reports can be slow to fully OCR/parse; sample key page windows for fast reliable extraction.
         if (pageCount > 250) {
             int window = 40;
@@ -155,6 +168,27 @@ public class PdfProcessorService {
         return pdfUtils.extractTextFromPdf(file);
     }
 
+    private String extractTextFromOfficeDocument(File file, String extension) throws IOException {
+        if ("docx".equals(extension)) {
+            try (InputStream input = new FileInputStream(file);
+                 XWPFDocument document = new XWPFDocument(input);
+                 XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+                return extractor.getText();
+            }
+        }
+
+        if ("doc".equals(extension)) {
+            try (InputStream input = new FileInputStream(file);
+                 HWPFDocument document = new HWPFDocument(input);
+                 WordExtractor extractor = new WordExtractor(document)) {
+                return extractor.getText();
+            }
+        }
+
+        // Last-resort fallback for unknown but text-like uploads.
+        return Files.readString(file.toPath(), StandardCharsets.UTF_8);
+    }
+
     private void validateUploadInput(MultipartFile file, String category) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Upload failed: file is empty.");
@@ -166,14 +200,26 @@ public class PdfProcessorService {
         }
 
         String name = file.getOriginalFilename();
-        if (name == null || !name.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
-            throw new IllegalArgumentException("Only PDF files are accepted.");
+        String ext = getExtension(name);
+        if (!Set.of("pdf", "doc", "docx").contains(ext)) {
+            throw new IllegalArgumentException("Only PDF, DOC, and DOCX files are accepted.");
         }
 
         long maxBytes = (long) config.getMaxFileSizeMb() * 1024 * 1024;
         if (file.getSize() > maxBytes) {
             throw new IllegalArgumentException("File exceeds configured upload limit of " + config.getMaxFileSizeMb() + "MB.");
         }
+    }
+
+    private String getExtension(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "";
+        }
+        int idx = filename.lastIndexOf('.');
+        if (idx < 0 || idx == filename.length() - 1) {
+            return "";
+        }
+        return filename.substring(idx + 1).toLowerCase(Locale.ROOT);
     }
 
     private String buildFocusedText(String fullText, Map<String, String> sections) {

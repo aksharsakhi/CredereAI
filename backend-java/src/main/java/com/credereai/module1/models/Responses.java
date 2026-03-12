@@ -29,6 +29,21 @@ public class Responses {
     }
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class UploadFailure {
+        private String filename;
+        private String message;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class BatchExtractionResponse {
+        private int totalFiles;
+        private int processedCount;
+        private int failedCount;
+        private List<ExtractionResponse> processed;
+        private List<UploadFailure> failed;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class TrendAnalysisResponse {
         private List<FinancialData.TrendAnalysis> trends;
         private String summary;
