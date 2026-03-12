@@ -50,7 +50,9 @@ public class WebConfig implements WebMvcConfigurer {
         if (value == null) return "";
 
         String cleaned = value.trim();
-        if ((cleaned.startsWith("\"") && cleaned.endsWith("\"")) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        if ((cleaned.startsWith("\"") && cleaned.endsWith("\""))
+            || (cleaned.startsWith("'") && cleaned.endsWith("'"))
+            || (cleaned.startsWith("`") && cleaned.endsWith("`"))) {
             cleaned = cleaned.substring(1, cleaned.length() - 1).trim();
         }
         if (cleaned.isBlank() || "*".equals(cleaned)) {
