@@ -1,8 +1,12 @@
 # Credere AI
 
-**Live Demo:** [credereai-frontend.pages.dev](https://credereai-frontend.pages.dev/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-credereai--frontend.pages.dev-3b93d2?style=for-the-badge&logo=cloudflare)](https://credereai-frontend.pages.dev/)
+&nbsp;
+[![Watch Demo Video](https://img.shields.io/badge/Demo%20Video-Watch%20Now-red?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1UaqxdGIYJWDyXdq_Hina9SpBy7M2G7Oz/view)
 
-**Demo Video:** [Watch on Google Drive](https://drive.google.com/file/d/1UaqxdGIYJWDyXdq_Hina9SpBy7M2G7Oz/view)
+---
+
+> **Note:** GitHub README does not support embedding Google Drive videos inline. Click the badge above to watch the demo. To embed a video natively on GitHub, the video file would need to be uploaded as a GitHub-hosted asset.
 
 ---
 
