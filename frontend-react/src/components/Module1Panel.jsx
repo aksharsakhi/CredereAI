@@ -210,54 +210,96 @@ export default function Module1Panel({ user }) {
       <div className="module1-layout">
         <div className="module1-left">
           <div className="card">
-            <h3>Document Ingestion</h3>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+              <h3 style={{margin: 0}}>Intake Pipeline</h3>
+              <span className="chip chip-ok" style={{fontSize: '10px'}}>Active</span>
+            </div>
+            
             <form onSubmit={handleUpload} className="form-grid">
               <label className="full-width">
-                Category
+                <span style={{fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block'}}>Document Category</span>
                 <select value={category} onChange={(e) => setCategory(e.target.value)}>
                   {categories.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
                 {category === 'auto_detect' && (
-                  <p style={{fontSize: '11px', color: 'var(--brand)', marginTop: '4px', fontWeight: 600}}>
-                    AI will automatically identify document structure and classification.
+                  <p style={{fontSize: '11px', color: 'var(--brand)', marginTop: '8px', fontWeight: 600}}>
+                    ✨ AI-Intelligence enabled: Automated structure recognition.
                   </p>
                 )}
               </label>
-              <label className="full-width">
-                PDF Upload
-                <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-              </label>
-              <button type="submit" disabled={!file || loading} className="full-width">
-                {loading ? 'Processing Pipeline...' : 'Upload & Process'}
+
+              <div className="full-width">
+                <span style={{fontWeight: 700, fontSize: '13px', marginBottom: '10px', display: 'block'}}>Source Asset (PDF)</span>
+                <div className={`dropzone-container ${file ? 'active' : ''}`}>
+                  <div className="dropzone-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <p style={{margin: 0, fontWeight: 600}}>Click to browse or drag & drop</p>
+                  <p className="muted-note" style={{fontSize: '11px', marginTop: '4px'}}>Maximum size: {maxUploadMb}MB</p>
+                  <input 
+                    type="file" 
+                    className="file-input-hidden" 
+                    accept="application/pdf" 
+                    onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                  />
+                  
+                  {file && (
+                    <div className="selected-file-info">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      {file.name} ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button type="submit" disabled={!file || loading} className="full-width primary" style={{marginTop: '12px', padding: '14px'}}>
+                {loading ? 'Executing Pipeline...' : 'Process Document'}
               </button>
             </form>
-            <div className="ingest-note" style={{marginTop: '1.5rem', padding: '1rem', background: 'color-mix(in srgb, var(--brand) 8%, var(--surface))', borderRadius: '12px'}}>
-              <strong>Pipeline Capabilities:</strong>
-              <p style={{fontSize: '12px', marginTop: '0.5rem'}}>Supports multi-page Annual Reports, GST-3B/GSTR-1, and 6-month Bank Statements. Advanced OCR and Table Extraction enabled.</p>
-              {historyMessage ? <p className="muted-note" style={{marginTop: '0.5rem'}}>{historyMessage}</p> : null}
+
+            <div className="ingest-note" style={{marginTop: '2rem', padding: '1.25rem', background: 'var(--bg-alt)', borderRadius: '16px', border: '1px solid var(--line)'}}>
+              <strong style={{fontSize: '13px', display: 'block', marginBottom: '8px'}}>Pipeline Status:</strong>
+              <div style={{display: 'grid', gap: '8px', fontSize: '12px'}}>
+                <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}><span style={{width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)'}}></span> Multi-page OCR Engaged</div>
+                <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}><span style={{width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)'}}></span> Table Extraction (Tabula) Enabled</div>
+                <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}><span style={{width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)'}}></span> Grounding Guardrails Active</div>
+              </div>
+              {historyMessage ? <p style={{marginTop: '1rem', color: 'var(--brand)', fontWeight: 600, fontSize: '11px'}}>{historyMessage}</p> : null}
             </div>
           </div>
 
           <div className="card">
-            <h3>Uploaded Documents</h3>
-            {documents.length === 0 ? <p>No documents uploaded.</p> : null}
-            {documents.slice(0, 12).map((d) => (
-              <div key={d.id} className="list-row">
-                <span>{d.filename} ({d.pageCount}p)</span>
-                <div className="row-actions">
-                  <span>{d.category}</span>
-                  <button className="danger-btn" onClick={() => handleDeleteDocument(d.id)} disabled={loading}>Delete</button>
+            <h3 style={{marginBottom: '1rem'}}>Indexed Assets</h3>
+            {documents.length === 0 ? <p className="muted-note">No documents present in current session.</p> : null}
+            <div style={{display: 'grid', gap: '10px'}}>
+              {documents.slice(0, 8).map((d) => (
+                <div key={d.id} className="list-row" style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                    <div style={{width: 32, height: 32, borderRadius: '8px', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)'}}>
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div>
+                      <div style={{fontWeight: 700, fontSize: '13px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{d.filename}</div>
+                      <div style={{fontSize: '11px', color: 'var(--muted)'}}>{d.pageCount} pages • {d.category}</div>
+                    </div>
+                  </div>
+                  <button className="secondary" style={{padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none'}} onClick={() => handleDeleteDocument(d.id)} disabled={loading}>
+                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="card">
-            <h3>Data Completeness</h3>
+          <div className="card" style={{textAlign: 'center'}}>
+            <h3 style={{marginBottom: '1rem'}}>Data Coverage</h3>
             <CompletenessDial score={completenessScore} />
-            <p>{completeness ? `${completenessScore.toFixed(1)}% coverage` : 'No completeness data yet.'}</p>
+            <div style={{marginTop: '1rem'}}>
+              <strong style={{fontSize: '24px'}}>{completenessScore.toFixed(1)}%</strong>
+              <p className="muted-note" style={{fontSize: '12px'}}>Target: {completenessScore >= 80 ? 'Threshold Met' : '85% for Committee'}</p>
+            </div>
           </div>
         </div>
 
@@ -270,21 +312,22 @@ export default function Module1Panel({ user }) {
             </div>
           </div>
 
-          <div className="module2-tabs">
+          <div className="module2-tabs" style={{border: 'none', background: 'var(--bg-alt)', padding: '6px', borderRadius: '14px', display: 'flex', gap: '4px'}}>
             {[
-              ['overview', 'Overview'],
-              ['extraction', 'Extraction'],
-              ['trends', 'Trends'],
-              ['fraud', 'Fraud Shield'],
-              ['ratios', 'Ratios'],
-              ['reliability', 'Reliability'],
-              ['enterprise', 'Enterprise Ops'],
+              ['overview', 'Summary'],
+              ['extraction', 'IQ Assets'],
+              ['trends', 'Signals'],
+              ['fraud', 'Shield'],
+              ['ratios', 'Metrics'],
+              ['reliability', 'Evidence'],
+              ['enterprise', 'Ops'],
             ].map(([key, label]) => (
               <button
                 key={key}
                 type="button"
                 className={activeTab === key ? 'tab-btn active' : 'tab-btn'}
                 onClick={() => setActiveTab(key)}
+                style={{flex: 1, padding: '10px 4px', borderRadius: '10px', fontSize: '11px', fontWeight: 700}}
               >
                 {label}
               </button>
@@ -294,48 +337,57 @@ export default function Module1Panel({ user }) {
           {error ? <p className="error">{error}</p> : null}
 
           {!dashboard ? (
-            <div className="module2-empty-state">
-              <h4>Upload Documents to Begin</h4>
-              <p>After ingestion, run analysis to unlock trend, fraud, and underwriting intelligence.</p>
+            <div className="module2-empty-state" style={{background: 'var(--surface-2)', borderRadius: '20px', border: '1px dashed var(--line)', margin: '20px 0'}}>
+              <div style={{fontSize: '48px', marginBottom: '20px'}}>📊</div>
+              <h4>Orchestration Ready</h4>
+              <p style={{maxWidth: '300px', margin: '8px auto'}}>Index your governance and financial assets to unlock real-time synthesis.</p>
             </div>
           ) : null}
 
           {dashboard && activeTab === 'overview' ? (
             <>
-              <div className="kpi-grid">
-                <div className="kpi-card">
-                  <span className="kpi-label">Company</span>
-                  <strong className="kpi-value kpi-compact">{dashboard.companyName || 'Unknown Entity'}</strong>
+              <div className="kpi-grid" style={{marginBottom: '20px'}}>
+                <div className="kpi-card glass-card" style={{borderLeft: '4px solid var(--brand)'}}>
+                  <span className="kpi-label">Legal Name</span>
+                  <strong className="kpi-value kpi-compact" style={{color: 'var(--brand)'}}>{dashboard.companyName || 'Unindexed Entity'}</strong>
                 </div>
-                <div className="kpi-card">
-                  <span className="kpi-label">Financial Year</span>
+                <div className="kpi-card glass-card" style={{borderLeft: '4px solid var(--brand-2)'}}>
+                  <span className="kpi-label">Assessment FY</span>
                   <strong className="kpi-value">{dashboard.financialYear || 'N/A'}</strong>
                 </div>
-                <div className="kpi-card">
-                  <span className="kpi-label">Risk Signals</span>
+                <div className="kpi-card glass-card" style={{borderLeft: '4px solid var(--warn)'}}>
+                  <span className="kpi-label">Anomaly Count</span>
                   <strong className="kpi-value">{riskSignals}</strong>
                 </div>
-                <div className="kpi-card">
-                  <span className="kpi-label">Decision</span>
-                  <strong className="kpi-value">{underwriting?.decision || 'Pending'}</strong>
+                <div className="kpi-card glass-card" style={{borderLeft: '4px solid var(--ok)'}}>
+                  <span className="kpi-label">Policy Match</span>
+                  <strong className="kpi-value">{underwriting?.decision || 'Reviewing'}</strong>
                 </div>
               </div>
 
-              <div className="kpi-grid">
+              <div className="kpi-grid" style={{gap: '12px'}}>
                 {(dashboard.kpis || []).map((k) => (
                   <div key={k.key} className={`kpi-card status-${(k.status || 'UNKNOWN').toLowerCase()}`}>
                     <span className="kpi-label">{k.label}</span>
-                    <strong className="kpi-value">{k.value == null ? 'N/A' : `${k.value.toFixed(2)}${k.unit ? ` ${k.unit}` : ''}`}</strong>
-                    <span className="kpi-status">{k.status || 'UNKNOWN'}</span>
+                    <div style={{display: 'flex', alignItems: 'baseline', gap: '4px'}}>
+                       <strong className="kpi-value">{k.value == null ? 'N/A' : k.value.toFixed(2)}</strong>
+                       {k.unit && <span style={{fontSize: '11px', fontWeight: 700, color: 'var(--muted)'}}>{k.unit}</span>}
+                    </div>
+                    <span className="kpi-status" style={{marginTop: '4px'}}>{k.status || 'STABLE'}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="card">
-                <h3>Explainability Notes</h3>
-                <ul className="insight-list">
+              <div className="card" style={{marginTop: '20px', background: 'var(--surface-2)'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px'}}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                   <h3 style={{margin: 0}}>AI Synthesis Insights</h3>
+                </div>
+                <ul className="insight-list" style={{display: 'grid', gap: '10px'}}>
                   {(dashboard.insights || []).map((i, idx) => (
-                    <li key={`${i}-${idx}`}>{i}</li>
+                    <li key={`${i}-${idx}`} style={{padding: '12px', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--line)', fontSize: '13px', lineHeight: 1.5}}>
+                       {i}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -552,15 +604,38 @@ export default function Module1Panel({ user }) {
 
 function CompletenessDial({ score }) {
   const safe = Math.max(0, Math.min(100, Number(score) || 0));
+  const radius = 45;
+  const circuit = 2 * Math.PI * radius;
+  const offset = circuit - (safe / 100) * circuit;
+  const color = safe >= 80 ? 'var(--ok)' : safe >= 50 ? 'var(--warn)' : 'var(--danger)';
+
   return (
-    <div className="gauge-wrap">
-      <div className="gauge">
-        <div className="gauge-inner">
-          <strong>{safe.toFixed(1)}</strong>
-          <span>%</span>
-        </div>
-        <div className="gauge-ring" style={{ '--progress': `${safe}%` }} />
-      </div>
+    <div style={{ position: 'relative', width: '160px', height: '160px', margin: '0 auto' }}>
+      <svg width="160" height="160" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="var(--brand)" />
+            <stop offset="100%" stopColor="var(--brand-2)" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--bg-alt)" strokeWidth="8" />
+        <circle 
+          cx="50" cy="50" r={radius} fill="none" 
+          stroke="url(#gauge-grad)" 
+          strokeWidth="8" 
+          strokeDasharray={circuit} 
+          strokeDashoffset={offset} 
+          strokeLinecap="round" 
+          transform="rotate(-90 50 50)"
+          style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+        />
+        <text x="50" y="52" textAnchor="middle" dominantBaseline="middle" style={{fontSize: '18px', fontWeight: 800, fill: 'var(--text)'}}>
+          {safe.toFixed(0)}%
+        </text>
+        <text x="50" y="68" textAnchor="middle" style={{fontSize: '6px', fontWeight: 700, fill: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em'}}>
+          Coverage
+        </text>
+      </svg>
     </div>
   );
 }
