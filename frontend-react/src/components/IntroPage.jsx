@@ -139,6 +139,7 @@ export default function IntroPage({ onGetStarted }) {
       {/* Hero */}
       <section className="hp-hero">
         <div className="hp-hero-inner">
+          <div className="hp-hero-brand-name">Credere AI</div>
           <div className="hp-hero-badge">AI-Powered Credit Intelligence Platform</div>
           <h1>Faster, Safer<br />Lending Decisions</h1>
           <p className="hp-hero-sub">
