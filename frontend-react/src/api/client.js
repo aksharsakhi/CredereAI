@@ -15,8 +15,10 @@ function buildCandidateApiBases() {
 
   // Prefer explicit env base when provided, but keep robust fallbacks.
   if (envBase) {
+    // Ensure /api suffix for production deployments (e.g. from VITE_API_BASE=https://host.onrender.com)
+    const envBaseWithApi = envBase.endsWith('/api') ? envBase : `${envBase}/api`;
     return Array.from(new Set([
-      normalizeBase(envBase),
+      normalizeBase(envBaseWithApi),
       normalizeBase(local8013),
       normalizeBase(local8001),
       normalizeBase(local8000),

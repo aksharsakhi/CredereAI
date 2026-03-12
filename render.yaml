@@ -29,7 +29,7 @@ services:
         fromService:
           name: credere-backend
           type: web
-          property: host
+          property: url
     routes:
       - type: rewrite
         source: /*
