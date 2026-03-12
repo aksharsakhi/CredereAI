@@ -11,9 +11,9 @@ services:
       - key: LLM_PROVIDER
         value: gemini
       - key: GEMINI_API_KEY
-        sync: false # User should set this in Render Dashboard
+        sync: false 
       - key: GROQ_API_KEY
-        sync: false # User should set this in Render Dashboard
+        sync: false 
       - key: JAVA_OPTS
         value: -Xmx512m
 

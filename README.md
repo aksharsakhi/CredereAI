@@ -1,5 +1,11 @@
 # Credere AI
 
+**Live Demo:** [credereai-frontend.pages.dev](https://credereai-frontend.pages.dev/)
+
+**Demo Video:** [Watch on Google Drive](https://drive.google.com/file/d/1UaqxdGIYJWDyXdq_Hina9SpBy7M2G7Oz/view)
+
+---
+
 Credere AI is a full-stack corporate credit intelligence workspace built for document-led underwriting, external research, portfolio visibility, decision support, and grounded knowledge retrieval.
 
 The project combines:
