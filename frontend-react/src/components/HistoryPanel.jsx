@@ -12,7 +12,7 @@ export default function HistoryPanel() {
     setError('');
     try {
       const list = await getAnalysisHistory(50);
-      setItems(list || []);
+      setItems(Array.isArray(list) ? list : []);
       if (list?.length && !selected) {
         const detail = await getHistoryById(list[0].id);
         setSelected(detail);

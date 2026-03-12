@@ -99,8 +99,8 @@ export default function Module2Panel() {
 
   async function refreshCaseWorkbench(caseId) {
     const [caseList, overdue] = await Promise.all([listModule2Cases(), listModule2OverdueActions()]);
-    setCases(caseList || []);
-    setOverdueActions(overdue || []);
+    setCases(Array.isArray(caseList) ? caseList : []);
+    setOverdueActions(Array.isArray(overdue) ? overdue : []);
 
     const targetId = caseId || caseList?.[0]?.caseId;
     if (targetId) {
@@ -110,7 +110,7 @@ export default function Module2Panel() {
         verifyModule2CaseAudit(targetId),
       ]);
       setSelectedCase(detail || null);
-      setAuditRows(audit || []);
+      setAuditRows(Array.isArray(audit) ? audit : []);
       setAuditVerification(verify || null);
     }
   }
