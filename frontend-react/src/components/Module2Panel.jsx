@@ -230,8 +230,11 @@ export default function Module2Panel() {
   const adjustedView = buildAdjustedRiskView(report, qualitativeNotes);
   const recommendation = buildRecommendation(report, adjustedView.adjustedScore);
   const camSummary = buildCamSummary(report, qualitativeNotes, recommendation);
-  const sentimentSummary = summarizeSentiments(report?.newsSignals || []);
-  const litigationStatusSummary = summarizeLitigationStatus(report?.litigationRecords || []);
+  const safeLitigationRecords = Array.isArray(report?.litigationRecords) ? report.litigationRecords : [];
+  const safeNewsSignals = Array.isArray(report?.newsSignals) ? report.newsSignals : [];
+  const safeRiskAlerts = Array.isArray(report?.riskScore?.alerts) ? report.riskScore.alerts : [];
+  const sentimentSummary = summarizeSentiments(safeNewsSignals);
+  const litigationStatusSummary = summarizeLitigationStatus(safeLitigationRecords);
   const reliability = buildResearchReliability(report);
   const actionQueue = buildActionQueue(report, adjustedView.adjustedScore);
   const regulatoryHeat = summarizeRegulatorySeverity(report?.regulatoryActions || []);
@@ -539,13 +542,13 @@ export default function Module2Panel() {
             <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px', marginTop: '20px'}}>
               <div className="card">
                 <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Legal Friction Tracker</h3>
-                {(report.litigationRecords || []).length === 0 ? (
+                {safeLitigationRecords.length === 0 ? (
                   <div style={{padding: '40px', textAlign: 'center', background: 'var(--bg-alt)', borderRadius: '16px'}}>
                     <p style={{color: 'var(--muted)', margin: 0}}>Structural search completed. No significant litigation entries found.</p>
                   </div>
                 ) : (
                   <div className="list-table" style={{display: 'grid', gap: '8px'}}>
-                    {report.litigationRecords.slice(0, 15).map((l, idx) => (
+                    {safeLitigationRecords.slice(0, 15).map((l, idx) => (
                       <div key={`${l.caseNumber}-${idx}`} className="list-row" style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                             <div style={{width: 32, height: 32, borderRadius: '8px', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)'}}>
@@ -576,13 +579,13 @@ export default function Module2Panel() {
             <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px', marginTop: '20px'}}>
               <div className="card">
                 <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Real-time Intelligence Signals</h3>
-                {(report.newsSignals || []).length === 0 ? (
+                {safeNewsSignals.length === 0 ? (
                   <div style={{padding: '40px', textAlign: 'center', background: 'var(--bg-alt)', borderRadius: '16px'}}>
                     <p style={{color: 'var(--muted)', margin: 0}}>No high-impact signals detected in current cycle.</p>
                   </div>
                 ) : (
                   <div className="news-list" style={{display: 'grid', gap: '12px'}}>
-                    {report.newsSignals.slice(0, 15).map((n, idx) => (
+                    {safeNewsSignals.slice(0, 15).map((n, idx) => (
                       <div key={`${n.title}-${idx}`} className="news-item" style={{padding: '16px', background: 'var(--surface-2)', borderRadius: '14px', border: '1px solid var(--line)'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '8px'}}>
                           <strong style={{fontSize: '14px', lineHeight: 1.4}}>{n.title}</strong>
@@ -601,7 +604,7 @@ export default function Module2Panel() {
                 <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Sentiment Distribution</h3>
                 <ScoreBars data={Object.entries(sentimentSummary)} />
                 <div style={{marginTop: '20px', padding: '16px', background: 'var(--bg-alt)', borderRadius: '12px', fontSize: '12px', lineHeight: 1.5}}>
-                   <strong>AI Interpretation:</strong> The prevailing sentiment profile indicates a {Object.keys(sentimentSummary).find(k => sentimentSummary[k] === Math.max(...Object.values(sentimentSummary))) || 'neutral'} outlook based on {(report.newsSignals || []).length} surface signals.
+                   <strong>AI Interpretation:</strong> The prevailing sentiment profile indicates a {Object.keys(sentimentSummary).find(k => sentimentSummary[k] === Math.max(...Object.values(sentimentSummary))) || 'neutral'} outlook based on {safeNewsSignals.length} surface signals.
                 </div>
               </div>
             </div>
@@ -610,7 +613,7 @@ export default function Module2Panel() {
           {report && activeTab === 'alerts' ? (
             <div className="card" style={{marginTop: '20px'}}>
               <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Neural Watchlist & Risk Alerts</h3>
-              {(report.riskScore?.alerts || []).length === 0 ? (
+              {safeRiskAlerts.length === 0 ? (
                 <div style={{padding: '60px', textAlign: 'center', background: 'var(--bg-alt)', borderRadius: '20px'}}>
                    <div style={{fontSize: '32px', marginBottom: '12px'}}>✅</div>
                    <p style={{margin: 0, fontWeight: 700}}>Zero High-Impact Alerts Detected</p>
@@ -618,7 +621,7 @@ export default function Module2Panel() {
                 </div>
               ) : (
                 <div className="alert-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px'}}>
-                  {report.riskScore.alerts.slice(0, 20).map((a, idx) => (
+                  {safeRiskAlerts.slice(0, 20).map((a, idx) => (
                     <div key={`${a.title}-${idx}`} className="alert-card glass-card" style={{borderLeft: `4px solid ${a.severity === 'CRITICAL' ? 'var(--danger)' : a.severity === 'HIGH' ? 'var(--warn)' : 'var(--ok)'}`}}>
                       <div className="ratio-head" style={{marginBottom: '10px'}}>
                         <strong style={{fontSize: '14px'}}>{a.title}</strong>
@@ -881,7 +884,8 @@ function buildAdjustedRiskView(report, notesText) {
 }
 
 function buildRecommendation(report, adjustedScore) {
-  const alertCount = report?.riskScore?.alerts?.length || 0;
+  const riskAlerts = Array.isArray(report?.riskScore?.alerts) ? report.riskScore.alerts : [];
+  const alertCount = riskAlerts.length;
   const litigationCount = report?.litigationRecords?.length || 0;
   const baseLimit = 100;
   const riskRatio = Math.max(0, Math.min(1, adjustedScore / 30));
@@ -918,7 +922,8 @@ function buildCamSummary(report, notesText, recommendation) {
 }
 
 function summarizeSentiments(news) {
-  return (news || []).reduce(
+  const rows = Array.isArray(news) ? news : [];
+  return rows.reduce(
     (acc, item) => {
       const key = (item?.sentiment || 'unknown').toLowerCase();
       acc[key] = (acc[key] || 0) + 1;
@@ -930,7 +935,8 @@ function summarizeSentiments(news) {
 
 function summarizeLitigationStatus(records) {
   const summary = {};
-  (records || []).forEach((record) => {
+  const rows = Array.isArray(records) ? records : [];
+  rows.forEach((record) => {
     const key = (record?.status || 'unknown').toLowerCase();
     summary[key] = (summary[key] || 0) + 1;
   });
@@ -939,7 +945,8 @@ function summarizeLitigationStatus(records) {
 
 function summarizeRegulatorySeverity(actions) {
   const summary = { low: 0, medium: 0, high: 0, critical: 0 };
-  (actions || []).forEach((action) => {
+  const rows = Array.isArray(actions) ? actions : [];
+  rows.forEach((action) => {
     const key = (action?.severity || 'low').toLowerCase();
     if (Object.prototype.hasOwnProperty.call(summary, key)) {
       summary[key] += 1;
@@ -969,7 +976,7 @@ function buildResearchReliability(report) {
 }
 
 function buildActionQueue(report, adjustedScore) {
-  const alerts = report?.riskScore?.alerts || [];
+  const alerts = Array.isArray(report?.riskScore?.alerts) ? report.riskScore.alerts : [];
   const severeAlerts = alerts.filter((a) => ['HIGH', 'CRITICAL'].includes((a?.severity || '').toUpperCase()));
   const litigationCount = report?.litigationRecords?.length || 0;
 

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getKnowledgeHubResponse, getDocuments } from '../api/client';
 
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function readStoredJson(key, fallback) {
   try {
     const saved = localStorage.getItem(key);
@@ -40,7 +44,7 @@ export default function KnowledgePanel() {
     async function loadResources() {
       try {
         const docs = await getDocuments();
-        setIndexedDocs(docs || []);
+        setIndexedDocs(toArray(docs));
       } catch (err) {
         console.error("Failed to load documents for knowledge hub", err);
       } finally {
@@ -113,9 +117,9 @@ export default function KnowledgePanel() {
                       position: 'relative'
                   }}>
                       {msg.text}
-                      {msg.sources?.length > 0 && (
+                      {toArray(msg.sources).length > 0 && (
                         <div style={{marginTop: '12px', fontSize: '11px', color: 'var(--muted)', paddingTop: '10px', borderTop: '1px solid var(--line)', display: 'flex', flexWrap: 'wrap', gap: '4px'}}>
-                           <strong>Grounding:</strong> {msg.sources.map((s, si) => <span key={si} style={{padding: '2px 6px', background: 'var(--bg-alt)', borderRadius: '4px'}}>{s}</span>)}
+                           <strong>Grounding:</strong> {toArray(msg.sources).map((s, si) => <span key={si} style={{padding: '2px 6px', background: 'var(--bg-alt)', borderRadius: '4px'}}>{s}</span>)}
                         </div>
                       )}
                   </div>

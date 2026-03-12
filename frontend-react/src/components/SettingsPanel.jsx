@@ -16,9 +16,14 @@ export default function SettingsPanel({
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
 
-  const providers = llmSettings?.availableProviders || ['gemini', 'groq'];
+  const providers = Array.isArray(llmSettings?.availableProviders)
+    ? llmSettings.availableProviders
+    : ['gemini', 'groq'];
   const modelsByProvider = llmSettings?.modelsByProvider || {};
-  const selectedProviderModels = useMemo(() => modelsByProvider[selectedProvider] || [], [modelsByProvider, selectedProvider]);
+  const selectedProviderModels = useMemo(() => {
+    const value = modelsByProvider?.[selectedProvider];
+    return Array.isArray(value) ? value : [];
+  }, [modelsByProvider, selectedProvider]);
 
   useEffect(() => {
     const provider = llmSettings?.provider || 'gemini';
@@ -47,7 +52,7 @@ export default function SettingsPanel({
 
   function handleProviderChange(nextProvider) {
     setSelectedProvider(nextProvider);
-    const models = modelsByProvider[nextProvider] || [];
+    const models = Array.isArray(modelsByProvider?.[nextProvider]) ? modelsByProvider[nextProvider] : [];
     setSelectedModel(models[0] || '');
     setStatus('');
   }

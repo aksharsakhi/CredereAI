@@ -175,7 +175,8 @@ export default function Module1Panel({ user }) {
   }
 
   const completenessScore = completeness?.completenessScore ?? 0;
-  const criticalGapCount = (dashboard?.missingCriticalFields || []).length;
+  const missingCriticalFields = Array.isArray(dashboard?.missingCriticalFields) ? dashboard.missingCriticalFields : [];
+  const criticalGapCount = missingCriticalFields.length;
   const riskSignals = Object.values(dashboard?.riskBreakdown || {}).reduce((a, b) => a + b, 0);
   const workflowStage = completenessScore >= 70 ? 'Research Ready' : completenessScore >= 40 ? 'Needs More Docs' : 'Early Intake';
   const safeDocuments = Array.isArray(documents) ? documents : [];
@@ -192,7 +193,7 @@ export default function Module1Panel({ user }) {
   const fraudDeviation = gst > 0 ? (Math.abs(bankInflow - gst) / gst) * 100 : null;
 
   const completenessPreview = useMemo(() => {
-    const fields = completeness?.fields || [];
+    const fields = Array.isArray(completeness?.fields) ? completeness.fields : [];
     return fields.slice(0, 14);
   }, [completeness]);
 
@@ -413,7 +414,7 @@ export default function Module1Panel({ user }) {
                   {(dashboard.missingCriticalFields || []).length === 0 ? (
                     <span className="chip chip-ok">None</span>
                   ) : (
-                    dashboard.missingCriticalFields.map((f) => (
+                    missingCriticalFields.map((f) => (
                       <span key={f} className="chip chip-alert">{f}</span>
                     ))
                   )}
