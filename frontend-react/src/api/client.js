@@ -46,7 +46,10 @@ function buildCandidateApiBases() {
 }
 
 function normalizeBase(base) {
-  return base.endsWith('/') ? base.slice(0, -1) : base;
+  const trimmed = (base || '').trim();
+  if (!trimmed) return '';
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return withProtocol.endsWith('/') ? withProtocol.slice(0, -1) : withProtocol;
 }
 
 function getAuthToken() {
