@@ -33,10 +33,12 @@ function buildCandidateApiBases() {
   const host = window.location.hostname;
   const port = window.location.port;
   const fromOrigin = `${origin}/api`;
+  const hostedFallback = 'https://credere-backend.onrender.com/api';
   const local8000 = `http://${host}:8000/api`;
   const local8001 = `http://${host}:8001/api`;
   const local8013 = `http://${host}:8013/api`;
   const isViteDevPort = /^517\d$/.test(port);
+  const isCloudflarePages = host.endsWith('.pages.dev') || host.endsWith('.workers.dev');
 
   // Prefer explicit env base when provided, but keep robust fallbacks.
   if (envBase) {
@@ -65,6 +67,15 @@ function buildCandidateApiBases() {
       normalizeBase(local8001),
       normalizeBase(local8013),
       normalizeBase(local8000),
+      normalizeBase(fromOrigin),
+    ]));
+  }
+
+  // Cloudflare Pages serves static assets and does not expose backend /api routes.
+  // If runtime/build env var is missing, force known hosted backend first.
+  if (isCloudflarePages) {
+    return Array.from(new Set([
+      normalizeBase(hostedFallback),
       normalizeBase(fromOrigin),
     ]));
   }
