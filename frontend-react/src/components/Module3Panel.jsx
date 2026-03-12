@@ -11,7 +11,7 @@ function PeerBenchmarking({ companyName }) {
       try {
         setLoading(true);
         const data = await getPeerBenchmarking(companyName);
-        setPeers(data);
+        setPeers(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
       } finally {

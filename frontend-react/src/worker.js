@@ -8,7 +8,7 @@ export default {
       return response;
     }
 
-    const defaultApiBase = 'https://backend-java-zkqa.onrender.com/api';
+    const defaultApiBase = 'https://credere-backend.onrender.com/api';
     const apiBase = typeof env.VITE_API_BASE === 'string' && env.VITE_API_BASE.trim()
       ? env.VITE_API_BASE.trim()
       : defaultApiBase;
