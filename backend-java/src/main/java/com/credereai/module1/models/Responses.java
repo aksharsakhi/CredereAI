@@ -132,6 +132,7 @@ public class Responses {
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class RecommendationEngineResponse {
+        private String companyName;
         private String status; // READY, WITHHELD
         private String decision;
         private String riskBand;

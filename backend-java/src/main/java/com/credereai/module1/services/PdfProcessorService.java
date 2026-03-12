@@ -753,6 +753,7 @@ public class PdfProcessorService {
 
         if (data == null) {
             return RecommendationEngineResponse.builder()
+                    .companyName(null)
                     .status("WITHHELD")
                     .decision("WITHHOLD_RECOMMENDATION")
                     .riskBand("UNKNOWN")
@@ -808,6 +809,7 @@ public class PdfProcessorService {
             }
 
             return RecommendationEngineResponse.builder()
+                    .companyName(data.getCompanyName())
                     .status("WITHHELD")
                     .decision("WITHHOLD_RECOMMENDATION")
                     .riskBand(underwriting != null ? underwriting.getRiskBand() : "UNKNOWN")
@@ -833,6 +835,7 @@ public class PdfProcessorService {
         Double indicativeRate = spreadBps == null ? null : Math.round((8.50 + (spreadBps / 100.0)) * 100.0) / 100.0;
 
         return RecommendationEngineResponse.builder()
+            .companyName(data.getCompanyName())
                 .status("READY")
                 .decision(underwriting != null ? underwriting.getDecision() : "REFER_MANUAL_REVIEW")
                 .riskBand(underwriting != null ? underwriting.getRiskBand() : "UNKNOWN")

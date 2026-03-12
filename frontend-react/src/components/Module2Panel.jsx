@@ -334,11 +334,18 @@ export default function Module2Panel() {
   const safeLitigationRecords = Array.isArray(report?.litigationRecords) ? report.litigationRecords : [];
   const safeNewsSignals = Array.isArray(report?.newsSignals) ? report.newsSignals : [];
   const safeRiskAlerts = Array.isArray(report?.riskScore?.alerts) ? report.riskScore.alerts : [];
+  const safeNetworkNodes = Array.isArray(report?.networkGraph?.nodes) ? report.networkGraph.nodes : [];
+  const safeNetworkEdges = Array.isArray(report?.networkGraph?.edges) ? report.networkGraph.edges : [];
+  const safePromoterProfiles = Array.isArray(report?.promoterProfiles) ? report.promoterProfiles : [];
+  const safeRegulatoryActions = Array.isArray(report?.regulatoryActions) ? report.regulatoryActions : [];
   const sentimentSummary = summarizeSentiments(safeNewsSignals);
   const litigationStatusSummary = summarizeLitigationStatus(safeLitigationRecords);
   const reliability = buildResearchReliability(report);
   const actionQueue = buildActionQueue(report, adjustedView.adjustedScore);
-  const regulatoryHeat = summarizeRegulatorySeverity(report?.regulatoryActions || []);
+  const regulatoryHeat = summarizeRegulatorySeverity(safeRegulatoryActions);
+  const networkTypeBreakdown = summarizeNetworkTypes(safeNetworkNodes);
+  const relationshipBreakdown = summarizeRelationships(safeNetworkEdges);
+  const linkedEntityRows = buildLinkedEntityRows(safeNetworkNodes, safeNetworkEdges);
 
   return (
     <section className="panel">
@@ -537,8 +544,8 @@ export default function Module2Panel() {
                 <div className="kpi-grid">
                   <div className="kpi-card" style={{borderLeftColor: 'var(--brand)'}}>
                     <span className="kpi-label">Entity Network</span>
-                    <strong className="kpi-value">{report.networkGraph?.nodes?.length || 0} Nodes</strong>
-                    <span className="kpi-status">{report.networkGraph?.edges?.length || 0} Connections</span>
+                    <strong className="kpi-value">{safeNetworkNodes.length} Nodes</strong>
+                    <span className="kpi-status">{safeNetworkEdges.length} Connections</span>
                   </div>
                   <div className="kpi-card" style={{borderLeftColor: 'var(--danger)'}}>
                     <span className="kpi-label">Legal Friction</span>
@@ -596,45 +603,169 @@ export default function Module2Panel() {
           ) : null}
 
           {report && activeTab === 'network' ? (
-            <div className="card" style={{marginTop: '20px'}}>
-              <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Network Cluster Entities</h3>
-              <div className="list-table" style={{display: 'grid', gap: '8px'}}>
-                {(report.networkGraph?.nodes || []).slice(0, 30).map((n) => (
-                  <div key={n.id} className="list-row" style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                       <div style={{width: 32, height: 32, borderRadius: '8px', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)'}}>
-                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                       </div>
-                       <div>
-                         <span style={{fontWeight: 700, fontSize: '13px', display: 'block'}}>{n.name}</span>
-                         <span style={{fontSize: '11px', color: 'var(--muted)'}}>{n.id}</span>
-                       </div>
+            <div style={{display: 'grid', gap: '20px', marginTop: '20px'}}>
+              <div style={{display: 'grid', gridTemplateColumns: '1.45fr 0.8fr', gap: '20px'}}>
+                <div className="card glass-card">
+                  <div className="module2-results-head" style={{marginBottom: '14px'}}>
+                    <div>
+                      <h3 style={{margin: 0, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Network Exposure Map</h3>
+                      <p style={{margin: '6px 0 0', fontSize: '12px', color: 'var(--muted)'}}>{report.networkGraph?.summary || 'Inter-entity relationships derived from public-network intelligence.'}</p>
                     </div>
-                    <span className="chip chip-unknown" style={{fontSize: '10px'}}>{n.type}</span>
+                    <span className="chip chip-brand">{safeNetworkNodes.length} linked entities</span>
                   </div>
-                ))}
+                  <NetworkConstellation nodes={safeNetworkNodes} edges={safeNetworkEdges} companyName={companyName} />
+                </div>
+
+                <div style={{display: 'grid', gap: '16px'}}>
+                  <div className="card">
+                    <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Entity Mix</h3>
+                    <ScoreBars data={Object.entries(networkTypeBreakdown).map(([label, value]) => [label, value])} />
+                  </div>
+                  <div className="card">
+                    <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Relationship Density</h3>
+                    <ScoreBars data={Object.entries(relationshipBreakdown).slice(0, 5).map(([label, value]) => [label, value])} />
+                    <div style={{marginTop: '14px', padding: '12px', borderRadius: '12px', background: 'var(--surface-2)', border: '1px solid var(--line)', fontSize: '12px', lineHeight: 1.5}}>
+                      <strong>High-risk entities:</strong> {linkedEntityRows.filter((row) => row.riskScore >= 0.7).length} node(s) exceed the elevated-risk threshold.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="module2-results-head" style={{marginBottom: '14px'}}>
+                  <h3 style={{margin: 0, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Entity Intelligence Ledger</h3>
+                  <span className="chip chip-ok">Traceable relationships</span>
+                </div>
+                {linkedEntityRows.length === 0 ? (
+                  <div style={{padding: '48px', textAlign: 'center', background: 'var(--bg-alt)', borderRadius: '16px'}}>
+                    <p style={{margin: 0, color: 'var(--muted)'}}>No structured network entities returned in this run.</p>
+                  </div>
+                ) : (
+                  <div className="list-table" style={{display: 'grid', gap: '8px'}}>
+                    <div className="list-row" style={{fontWeight: 700, background: 'var(--bg-alt)'}}>
+                      <span>Entity</span>
+                      <span>Type</span>
+                      <span>Relationship</span>
+                      <span>Links</span>
+                      <span>Risk</span>
+                    </div>
+                    {linkedEntityRows.slice(0, 18).map((row) => (
+                      <div key={row.id} className="list-row" style={{alignItems: 'center'}}>
+                        <span style={{display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0}}>
+                          <span style={{width: 30, height: 30, borderRadius: '10px', background: row.color, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '11px'}}>{row.initials}</span>
+                          <span style={{display: 'grid', minWidth: 0}}>
+                            <strong style={{fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{row.name}</strong>
+                            <small style={{color: 'var(--muted)'}}>{row.id}</small>
+                          </span>
+                        </span>
+                        <span className="chip chip-unknown" style={{fontSize: '10px'}}>{row.type}</span>
+                        <span style={{fontSize: '12px'}}>{row.relationship}</span>
+                        <span style={{fontSize: '12px', fontWeight: 700}}>{row.connections}</span>
+                        <span style={{display: 'grid', gap: '4px', minWidth: '92px'}}>
+                          <strong style={{fontSize: '12px', color: row.color}}>{row.riskLabel}</strong>
+                          <span style={{height: '6px', background: 'var(--bg-alt)', borderRadius: '999px', overflow: 'hidden'}}>
+                            <span style={{display: 'block', height: '100%', width: `${Math.max(6, row.riskScore * 100)}%`, background: row.color, borderRadius: '999px'}} />
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Relationship Register</h3>
+                  {safeNetworkEdges.length === 0 ? (
+                    <p className="muted-note" style={{margin: 0}}>No edge relationships returned for this intelligence cycle.</p>
+                  ) : (
+                    <div className="list-table" style={{display: 'grid', gap: '8px'}}>
+                      {safeNetworkEdges.slice(0, 12).map((edge, idx) => (
+                        <div key={`${edge.source}-${edge.target}-${idx}`} className="list-row" style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)'}}>
+                          <span style={{fontWeight: 600}}>{lookupNodeName(safeNetworkNodes, edge.source)}</span>
+                          <span style={{fontSize: '11px', color: 'var(--muted)'}}>{edge.relationship || 'linked to'}</span>
+                          <span style={{fontWeight: 600}}>{lookupNodeName(safeNetworkNodes, edge.target)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Escalation Triggers</h3>
+                  <div className="alert-grid" style={{display: 'grid', gap: '10px'}}>
+                    {linkedEntityRows.filter((row) => row.riskScore >= 0.5).slice(0, 4).map((row) => (
+                      <div key={`escalate-${row.id}`} className="alert-card" style={{padding: '12px', borderLeft: `3px solid ${row.color}`, background: 'var(--surface-2)'}}>
+                        <div className="ratio-head" style={{marginBottom: '4px'}}>
+                          <strong style={{fontSize: '12px'}}>{row.name}</strong>
+                          <span className="chip chip-unknown" style={{fontSize: '8px'}}>{row.type}</span>
+                        </div>
+                        <p style={{fontSize: '11px', margin: 0, color: 'var(--muted)', lineHeight: 1.45}}>
+                          {row.relationship} relationship with {row.connections} traceable link(s) and risk intensity {row.riskLabel.toLowerCase()}.
+                        </p>
+                      </div>
+                    ))}
+                    {linkedEntityRows.filter((row) => row.riskScore >= 0.5).length === 0 ? (
+                      <div style={{padding: '20px', background: 'var(--bg-alt)', borderRadius: '12px', color: 'var(--muted)', fontSize: '12px'}}>
+                        No elevated entity triggers surfaced in the structured network graph.
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
           ) : null}
 
           {report && activeTab === 'promoters' ? (
-            <div className="card" style={{marginTop: '20px'}}>
-              <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Promoter Global Watchlist</h3>
-              <div className="list-table" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px'}}>
-                {(report.promoterProfiles || []).slice(0, 20).map((p, idx) => (
-                  <div key={`${p.name}-${idx}`} className="list-row" style={{padding: '16px', background: 'var(--surface-2)', borderRadius: '14px', border: '1px solid var(--line)', display: 'block'}}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
-                       <span style={{fontWeight: 800, fontSize: '14px', color: 'var(--text)'}}>{p.name}</span>
-                       <span style={{fontSize: '11px', fontWeight: 700, padding: '4px 8px', background: 'var(--bg-alt)', borderRadius: '6px'}}>
-                         Risk: {(p.riskScore ?? 0).toFixed(1)}
-                       </span>
-                    </div>
-                    <div style={{display: 'flex', gap: '6px'}}>
-                       <span className="chip chip-ok" style={{fontSize: '9px'}}>KYC Verified</span>
-                       <span className="chip chip-brand" style={{fontSize: '9px'}}>PEP Checked</span>
-                    </div>
+            <div style={{display: 'grid', gap: '20px', marginTop: '20px'}}>
+              <div style={{display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px'}}>
+                <div className="card">
+                  <h3 style={{marginBottom: '1.25rem', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Promoter Global Watchlist</h3>
+                  <div className="list-table" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px'}}>
+                    {safePromoterProfiles.slice(0, 20).map((p, idx) => (
+                      <div key={`${p.name}-${idx}`} className="list-row" style={{padding: '16px', background: 'var(--surface-2)', borderRadius: '14px', border: '1px solid var(--line)', display: 'block'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
+                           <span style={{fontWeight: 800, fontSize: '14px', color: 'var(--text)'}}>{p.name}</span>
+                           <span style={{fontSize: '11px', fontWeight: 700, padding: '4px 8px', background: 'var(--bg-alt)', borderRadius: '6px', color: getRiskToneColor(p.riskScore)}}>
+                             Risk: {formatRiskScore(p.riskScore)}
+                           </span>
+                        </div>
+                        <p style={{margin: '0 0 10px', fontSize: '11px', color: 'var(--muted)'}}>{p.designation || 'Promoter / Key management'}</p>
+                        <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px'}}>
+                           <span className="chip chip-ok" style={{fontSize: '9px'}}>Holding {Number(p.holdingPercent || 0).toFixed(1)}%</span>
+                           <span className="chip chip-brand" style={{fontSize: '9px'}}>{(p.otherCompanies || []).length} linked firms</span>
+                        </div>
+                        <p style={{fontSize: '12px', lineHeight: 1.45, color: 'var(--text)', margin: 0}}>{p.backgroundSummary || 'No additional promoter summary returned in this cycle.'}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Flag & Affiliation Ledger</h3>
+                  {safePromoterProfiles.length === 0 ? (
+                    <p className="muted-note" style={{margin: 0}}>Promoter profiling did not return structured rows for this run.</p>
+                  ) : (
+                    <div className="list-table" style={{display: 'grid', gap: '10px'}}>
+                      {safePromoterProfiles.slice(0, 8).map((profile, idx) => (
+                        <div key={`flag-${profile.name}-${idx}`} style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)'}}>
+                          <div className="ratio-head" style={{marginBottom: '8px'}}>
+                            <strong style={{fontSize: '12px'}}>{profile.name}</strong>
+                            <span className="chip chip-unknown" style={{fontSize: '8px'}}>{profile.designation || 'Promoter'}</span>
+                          </div>
+                          <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: profile.flags?.length ? '10px' : 0}}>
+                            {(profile.flags || []).length > 0 ? profile.flags.map((flag) => (
+                              <span key={`${profile.name}-${flag}`} className="chip chip-warning" style={{fontSize: '8px'}}>{flag}</span>
+                            )) : <span className="chip chip-ok" style={{fontSize: '8px'}}>No surfaced flags</span>}
+                          </div>
+                          <div style={{fontSize: '11px', color: 'var(--muted)', lineHeight: 1.45}}>
+                            <strong style={{color: 'var(--text)'}}>Other companies:</strong> {(profile.otherCompanies || []).length > 0 ? profile.otherCompanies.join(', ') : 'None surfaced'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : null}
@@ -947,6 +1078,94 @@ function ScoreBars({ data }) {
     </div>
   );
 }
+
+function NetworkConstellation({ nodes, edges, companyName }) {
+  if (!Array.isArray(nodes) || nodes.length === 0) {
+    return (
+      <div style={{minHeight: '320px', display: 'grid', placeItems: 'center', background: 'radial-gradient(circle at center, color-mix(in srgb, var(--brand) 10%, transparent), transparent 65%)', borderRadius: '20px', border: '1px dashed var(--line)'}}>
+        <p style={{margin: 0, color: 'var(--muted)', fontSize: '12px'}}>Network visualization will appear when structured entity data is available.</p>
+      </div>
+    );
+  }
+
+  const displayNodes = nodes.slice(0, 19);
+  const coreNode = pickCoreNode(displayNodes, companyName);
+  const others = displayNodes.filter((node) => node.id !== coreNode.id);
+  const positions = buildConstellationPositions(coreNode, others);
+  const visibleNodeIds = new Set(displayNodes.map((node) => node.id));
+  const visibleEdges = (Array.isArray(edges) ? edges : []).filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)).slice(0, 28);
+
+  return (
+    <div style={{display: 'grid', gap: '14px'}}>
+      <div style={{position: 'relative', minHeight: '370px', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--line)', background: 'radial-gradient(circle at 50% 46%, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.03) 28%, transparent 55%), linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface)) 0%, var(--surface-2) 100%)'}}>
+        <svg viewBox="0 0 640 380" style={{width: '100%', height: '100%'}}>
+          <defs>
+            <radialGradient id="network-halo" cx="50%" cy="50%" r="65%">
+              <stop offset="0%" stopColor="rgba(51, 153, 255, 0.22)" />
+              <stop offset="100%" stopColor="rgba(51, 153, 255, 0)" />
+            </radialGradient>
+          </defs>
+          <circle cx="320" cy="190" r="82" fill="url(#network-halo)" />
+          <circle cx="320" cy="190" r="118" fill="none" stroke="rgba(255,255,255,0.08)" strokeDasharray="5 7" />
+          <circle cx="320" cy="190" r="168" fill="none" stroke="rgba(255,255,255,0.06)" strokeDasharray="5 7" />
+          <circle cx="320" cy="190" r="214" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="4 8" />
+
+          {visibleEdges.map((edge, index) => {
+            const source = positions.get(edge.source);
+            const target = positions.get(edge.target);
+            if (!source || !target) return null;
+            const opacity = 0.24 + Math.min(0.42, Number(edge.weight || 0.3));
+            return (
+              <g key={`${edge.source}-${edge.target}-${index}`}>
+                <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={`rgba(131, 196, 255, ${opacity})`} strokeWidth={1.5 + Math.max(0.4, Number(edge.weight || 0.3))} />
+                <text x={(source.x + target.x) / 2} y={(source.y + target.y) / 2 - 6} textAnchor="middle" fill="rgba(255,255,255,0.72)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
+                  {truncate(edge.relationship || 'linked', 16)}
+                </text>
+              </g>
+            );
+          })}
+
+          {displayNodes.map((node) => {
+            const position = positions.get(node.id);
+            if (!position) return null;
+            const nodeColor = getRiskToneColor(node.riskScore);
+            const labelColor = node.id === coreNode.id ? 'var(--text)' : 'rgba(255,255,255,0.86)';
+            return (
+              <g key={node.id}>
+                <circle cx={position.x} cy={position.y} r={position.radius + 10} fill={hexToRgba(nodeColor, 0.12)} />
+                <circle cx={position.x} cy={position.y} r={position.radius} fill={nodeColor} stroke="rgba(255,255,255,0.95)" strokeWidth={node.id === coreNode.id ? 3 : 2} />
+                <text x={position.x} y={position.y + 3} textAnchor="middle" fill="#fff" style={{fontSize: node.id === coreNode.id ? '11px' : '10px', fontWeight: 800, letterSpacing: '0.04em'}}>
+                  {getInitials(node.name)}
+                </text>
+                <text x={position.x} y={position.y + position.radius + 18} textAnchor="middle" fill={labelColor} style={{fontSize: node.id === coreNode.id ? '12px' : '10px', fontWeight: node.id === coreNode.id ? 800 : 600}}>
+                  {truncate(node.name || node.id, node.id === coreNode.id ? 26 : 18)}
+                </text>
+                <text x={position.x} y={position.y + position.radius + 30} textAnchor="middle" fill="rgba(255,255,255,0.56)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
+                  {(node.relationship || node.type || 'linked').replaceAll('_', ' ')}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+        {[
+          ['Low', 'var(--ok)'],
+          ['Moderate', 'var(--brand)'],
+          ['Elevated', 'var(--warn)'],
+          ['High', 'var(--danger)'],
+        ].map(([label, color]) => (
+          <span key={label} style={{display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', fontSize: '11px', fontWeight: 700}}>
+            <span style={{width: '10px', height: '10px', borderRadius: '50%', background: color}} />
+            {label} risk
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function buildAdjustedRiskView(report, notesText) {
   const base = Number(report?.riskScore?.compositeScore) || 0;
   const notes = (notesText || '').toLowerCase();
@@ -1109,4 +1328,121 @@ function buildActionQueue(report, adjustedScore) {
   const sla = adjustedScore >= 22 ? 'T+1 day' : adjustedScore >= 14 ? 'T+2 days' : 'T+5 days';
 
   return { items, priority, sla };
+}
+
+function summarizeNetworkTypes(nodes) {
+  const summary = {};
+  (Array.isArray(nodes) ? nodes : []).forEach((node) => {
+    const key = normalizeLabel(node?.type || 'other');
+    summary[key] = (summary[key] || 0) + 1;
+  });
+  return summary;
+}
+
+function summarizeRelationships(edges) {
+  const summary = {};
+  (Array.isArray(edges) ? edges : []).forEach((edge) => {
+    const key = normalizeLabel(edge?.relationship || 'linked');
+    summary[key] = (summary[key] || 0) + 1;
+  });
+  return Object.fromEntries(Object.entries(summary).sort((a, b) => b[1] - a[1]));
+}
+
+function buildLinkedEntityRows(nodes, edges) {
+  const edgeRows = Array.isArray(edges) ? edges : [];
+  return (Array.isArray(nodes) ? nodes : []).map((node) => {
+    const riskScore = Number(node?.riskScore) || 0;
+    return {
+      id: node?.id || node?.name || 'node',
+      name: node?.name || 'Unnamed entity',
+      type: normalizeLabel(node?.type || 'other'),
+      relationship: normalizeLabel(node?.relationship || 'linked entity'),
+      riskScore,
+      riskLabel: describeRisk(riskScore),
+      connections: edgeRows.filter((edge) => edge?.source === node?.id || edge?.target === node?.id).length,
+      initials: getInitials(node?.name),
+      color: getRiskToneColor(riskScore),
+    };
+  }).sort((a, b) => b.riskScore - a.riskScore || b.connections - a.connections);
+}
+
+function pickCoreNode(nodes, companyName) {
+  const normalizedCompanyName = String(companyName || '').trim().toLowerCase();
+  return nodes.find((node) => String(node?.name || '').trim().toLowerCase() === normalizedCompanyName)
+    || nodes.find((node) => String(node?.type || '').toLowerCase() === 'company')
+    || nodes[0];
+}
+
+function buildConstellationPositions(coreNode, otherNodes) {
+  const positions = new Map();
+  positions.set(coreNode.id, { x: 320, y: 190, radius: 34 + Math.min(14, (Number(coreNode.riskScore) || 0) * 14) });
+
+  otherNodes.forEach((node, index) => {
+    const ring = index < 6 ? 0 : index < 12 ? 1 : 2;
+    const ringRadius = [118, 168, 214][ring];
+    const ringCount = [Math.min(otherNodes.length, 6), Math.max(0, Math.min(otherNodes.length - 6, 6)), Math.max(0, otherNodes.length - 12)][ring] || 1;
+    const ringOffset = ring === 0 ? index : ring === 1 ? index - 6 : index - 12;
+    const angle = (-Math.PI / 2) + ((Math.PI * 2) / ringCount) * ringOffset;
+    positions.set(node.id, {
+      x: 320 + Math.cos(angle) * ringRadius,
+      y: 190 + Math.sin(angle) * ringRadius,
+      radius: 20 + Math.min(10, (Number(node.riskScore) || 0) * 12),
+    });
+  });
+
+  return positions;
+}
+
+function lookupNodeName(nodes, id) {
+  return (Array.isArray(nodes) ? nodes : []).find((node) => node?.id === id)?.name || id || 'Unknown';
+}
+
+function getRiskToneColor(score) {
+  const value = Number(score) || 0;
+  if (value >= 0.8) return 'var(--danger)';
+  if (value >= 0.55) return 'var(--warn)';
+  if (value >= 0.3) return 'var(--brand)';
+  return 'var(--ok)';
+}
+
+function describeRisk(score) {
+  const value = Number(score) || 0;
+  if (value >= 0.8) return 'High';
+  if (value >= 0.55) return 'Elevated';
+  if (value >= 0.3) return 'Moderate';
+  return 'Low';
+}
+
+function formatRiskScore(score) {
+  return (Number(score) || 0).toFixed(2);
+}
+
+function getInitials(name) {
+  const parts = String(name || 'NA').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('') || 'NA';
+}
+
+function normalizeLabel(value) {
+  return String(value || 'unknown')
+    .replaceAll('_', ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function truncate(value, maxLength) {
+  const text = String(value || '');
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
+}
+
+function hexToRgba(color, alpha) {
+  const palette = {
+    'var(--danger)': [214, 76, 76],
+    'var(--warn)': [245, 166, 35],
+    'var(--brand)': [34, 134, 255],
+    'var(--ok)': [42, 171, 107],
+  };
+  const tuple = palette[color] || [34, 134, 255];
+  return `rgba(${tuple[0]}, ${tuple[1]}, ${tuple[2]}, ${alpha})`;
 }

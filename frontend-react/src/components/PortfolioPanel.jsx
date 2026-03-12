@@ -44,6 +44,36 @@ export default function PortfolioPanel() {
     return Array.isArray(data?.activePipeline) ? data.activePipeline : [];
   }, [data?.activePipeline, activeSegment]);
 
+  const portfolioMix = useMemo(() => {
+    const safeHealth = currentData?.health || {};
+    return [
+      { label: 'Healthy', value: Number(safeHealth.healthyPct) || 0, color: 'var(--ok)' },
+      { label: 'Watch', value: Number(safeHealth.watchPct) || 0, color: 'var(--warn)' },
+      { label: 'Impaired', value: Number(safeHealth.nplPct) || 0, color: 'var(--danger)' },
+    ];
+  }, [currentData]);
+
+  const segmentComparison = useMemo(() => {
+    const totalExposure = segments.reduce((sum, segment) => sum + (Number(segment.totalOutstandingsCr) || 0), 0) || 1;
+    return segments.map((segment) => ({
+      segmentId: segment.segmentId,
+      label: segment.label,
+      exposure: Number(segment.totalOutstandingsCr) || 0,
+      sharePct: ((Number(segment.totalOutstandingsCr) || 0) / totalExposure) * 100,
+      avgRiskScore: Number(segment.avgRiskScore) || 0,
+      highRiskAlerts: Number(segment.highRiskAlerts) || 0,
+      count: Number(segment.count) || 0,
+    })).sort((a, b) => b.exposure - a.exposure);
+  }, [segments]);
+
+  const stageMix = useMemo(() => {
+    return filteredPipeline.reduce((acc, item) => {
+      const key = item?.stage || 'Unknown';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [filteredPipeline]);
+
   if (loading) return (
     <div className="module2-empty-state">
       <div className="spinner" />
@@ -115,7 +145,9 @@ export default function PortfolioPanel() {
             <span className="chip chip-ok">Live Confidence Matrix</span>
           </div>
           <p className="muted-note" style={{marginBottom: '1.5rem'}}>Composition based on extraction validation and scoring.</p>
-          
+
+         <div style={{display: 'grid', gridTemplateColumns: '0.9fr 1.1fr', gap: '20px', alignItems: 'center'}}>
+          <PortfolioCompositionRing items={portfolioMix} />
           <div className="health-viz-premium" style={{display: 'grid', gap: '1.5rem'}}>
              <div className="metric-row">
                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
@@ -138,6 +170,7 @@ export default function PortfolioPanel() {
                 </div>
                 <div className="metric-progress"><div className="metric-p-fill" style={{width: `${currentData.health.nplPct}%`, background: 'var(--danger)'}} /></div>
              </div>
+          </div>
           </div>
         </div>
 
@@ -163,6 +196,76 @@ export default function PortfolioPanel() {
                 Maintain DSCR buffers of &gt;1.5x for all current appraisals.
              </p>
           </div>
+        </div>
+      </div>
+
+      <div style={{display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '20px', marginTop: '2rem'}}>
+        <div className="card">
+          <div className="module2-results-head">
+            <h3>Segment Exposure Ladder</h3>
+            <span className="chip chip-brand">{segmentComparison.length} live segments</span>
+          </div>
+          <div style={{display: 'grid', gap: '14px', marginTop: '16px'}}>
+            {segmentComparison.map((segment) => (
+              <div key={segment.segmentId} style={{display: 'grid', gap: '6px'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '12px'}}>
+                  <strong>{segment.label}</strong>
+                  <span style={{color: 'var(--muted)'}}>₹ {segment.exposure.toLocaleString()} Cr</span>
+                </div>
+                <div style={{height: '10px', background: 'var(--bg-alt)', borderRadius: '999px', overflow: 'hidden'}}>
+                  <div style={{height: '100%', width: `${Math.max(6, segment.sharePct)}%`, background: 'linear-gradient(90deg, var(--brand), var(--brand-2))', borderRadius: '999px'}} />
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '11px', color: 'var(--muted)'}}>
+                  <span>{segment.sharePct.toFixed(1)}% of portfolio</span>
+                  <span>Risk {segment.avgRiskScore.toFixed(1)} / 10 | Alerts {segment.highRiskAlerts}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card glass-card">
+          <div className="module2-results-head">
+            <h3>Workflow Throughput</h3>
+            <span className="chip chip-ok">Operational lens</span>
+          </div>
+          <ScoreBars
+            data={Object.entries(stageMix).map(([label, value]) => [label, value])}
+          />
+          <div style={{marginTop: '16px', padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', fontSize: '12px', lineHeight: 1.5}}>
+            <strong>Readout:</strong> {filteredPipeline.length === 0 ? 'No active appraisal items are currently in motion.' : `${filteredPipeline.length} active appraisal item(s) are distributed across ${Object.keys(stageMix).length} workflow stage(s).`}
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{marginTop: '2rem'}}>
+        <div className="module2-results-head">
+          <h3>Segment Intelligence Table</h3>
+          <span className="chip chip-unknown">Exposure vs risk</span>
+        </div>
+        <div className="list-table" style={{marginTop: '1rem'}}>
+          <div className="list-row" style={{fontWeight: 700, background: 'var(--bg-alt)'}}>
+            <span>Segment</span>
+            <span>Accounts</span>
+            <span>Exposure</span>
+            <span>Share</span>
+            <span>Avg Risk</span>
+            <span>Alerts</span>
+          </div>
+          {segmentComparison.map((segment) => (
+            <div key={`segment-row-${segment.segmentId}`} className="list-row">
+              <span style={{fontWeight: 600}}>{segment.label}</span>
+              <span>{segment.count}</span>
+              <span>₹ {segment.exposure.toLocaleString()} Cr</span>
+              <span>{segment.sharePct.toFixed(1)}%</span>
+              <span>
+                <span className="chip chip-unknown" style={{color: segment.avgRiskScore >= 7.5 ? 'var(--danger)' : segment.avgRiskScore >= 5 ? 'var(--warn)' : 'var(--ok)'}}>
+                  {segment.avgRiskScore.toFixed(1)} / 10
+                </span>
+              </span>
+              <span>{segment.highRiskAlerts}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -200,5 +303,82 @@ export default function PortfolioPanel() {
         </div>
       </div>
     </section>
+  );
+}
+
+function PortfolioCompositionRing({ items }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
+  let currentOffset = 0;
+
+  return (
+    <div style={{display: 'grid', justifyItems: 'center', gap: '14px'}}>
+      <div style={{position: 'relative', width: '220px', height: '220px'}}>
+        <svg viewBox="0 0 220 220" style={{width: '100%', height: '100%'}}>
+          <circle cx="110" cy="110" r="72" fill="none" stroke="var(--bg-alt)" strokeWidth="24" />
+          {items.map((item) => {
+            const segmentLength = (item.value / total) * 452.39;
+            const dashOffset = 452.39 - currentOffset;
+            currentOffset += segmentLength;
+            return (
+              <circle
+                key={item.label}
+                cx="110"
+                cy="110"
+                r="72"
+                fill="none"
+                stroke={item.color}
+                strokeWidth="24"
+                strokeDasharray={`${segmentLength} 452.39`}
+                strokeDashoffset={dashOffset}
+                transform="rotate(-90 110 110)"
+                strokeLinecap="butt"
+              />
+            );
+          })}
+        </svg>
+        <div style={{position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center'}}>
+          <div>
+            <strong style={{display: 'block', fontSize: '26px'}}>{Math.round(total)}%</strong>
+            <span style={{fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em'}}>Portfolio health mapped</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display: 'grid', gap: '8px', width: '100%'}}>
+        {items.map((item) => (
+          <div key={`mix-${item.label}`} style={{display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '12px'}}>
+            <span style={{display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+              <span style={{width: '10px', height: '10px', borderRadius: '50%', background: item.color}} />
+              {item.label}
+            </span>
+            <strong>{item.value.toFixed(0)}%</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreBars({ data }) {
+  if (!data || data.length === 0) return <p className="muted-note" style={{margin: 0}}>No workflow metrics available.</p>;
+  const max = Math.max(...data.map(([, value]) => Number(value) || 0), 1);
+
+  return (
+    <div style={{display: 'grid', gap: '12px', marginTop: '16px'}}>
+      {data.map(([label, value]) => {
+        const safeValue = Number(value) || 0;
+        return (
+          <div key={label} style={{display: 'grid', gap: '6px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px'}}>
+              <span style={{fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase'}}>{label}</span>
+              <strong>{safeValue}</strong>
+            </div>
+            <div style={{height: '8px', background: 'var(--bg-alt)', borderRadius: '999px', overflow: 'hidden'}}>
+              <div style={{height: '100%', width: `${(safeValue / max) * 100}%`, background: 'linear-gradient(90deg, var(--brand), var(--brand-2))', borderRadius: '999px'}} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
