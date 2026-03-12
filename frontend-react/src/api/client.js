@@ -42,8 +42,16 @@ function buildCandidateApiBases() {
   if (envBase) {
     // Ensure /api suffix for production deployments (e.g. from VITE_API_BASE=https://host.onrender.com)
     const envBaseWithApi = envBase.endsWith('/api') ? envBase : `${envBase}/api`;
+    const normalizedEnv = normalizeBase(envBaseWithApi);
+    const isLocalEnv = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(normalizedEnv);
+
+    // In hosted environments, do not fall through to same-origin/static routes.
+    if (!isLocalEnv) {
+      return [normalizedEnv];
+    }
+
     return Array.from(new Set([
-      normalizeBase(envBaseWithApi),
+      normalizedEnv,
       normalizeBase(local8013),
       normalizeBase(local8001),
       normalizeBase(local8000),

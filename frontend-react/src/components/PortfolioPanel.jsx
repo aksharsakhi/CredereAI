@@ -14,8 +14,11 @@ export default function PortfolioPanel() {
   async function fetchData() {
     try {
       setLoading(true);
-      const data = await getPortfolioData();
-      setData(data);
+      const payload = await getPortfolioData();
+      setData({
+        segments: Array.isArray(payload?.segments) ? payload.segments : [],
+        activePipeline: Array.isArray(payload?.activePipeline) ? payload.activePipeline : [],
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -24,12 +27,12 @@ export default function PortfolioPanel() {
   }
 
   const segments = useMemo(() => {
-    if (data.segments.length > 0) return data.segments;
+    if (Array.isArray(data?.segments) && data.segments.length > 0) return data.segments;
     // Fallback if backend returns empty but we want some UI structure
     return [
       { segmentId: 'all', label: 'Entire Portfolio', count: 0, totalOutstandingsCr: 0, avgRiskScore: 0, highRiskAlerts: 0, health: { healthyPct: 100, watchPct: 0, nplPct: 0 } }
     ];
-  }, [data.segments]);
+  }, [data?.segments]);
 
   const currentData = useMemo(() => 
     segments.find(s => s.segmentId === activeSegment) || segments[0], 
@@ -38,8 +41,8 @@ export default function PortfolioPanel() {
   const filteredPipeline = useMemo(() => {
     // In a real sophisticated version, we'd filter the pipeline from backend too, 
     // but here we just show all if 'all' is selected.
-    return data.activePipeline || [];
-  }, [data.activePipeline, activeSegment]);
+    return Array.isArray(data?.activePipeline) ? data.activePipeline : [];
+  }, [data?.activePipeline, activeSegment]);
 
   if (loading) return (
     <div className="module2-empty-state">
