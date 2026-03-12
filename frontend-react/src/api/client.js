@@ -303,19 +303,21 @@ export async function resetModule1() {
 }
 
 export async function runResearch(payload) {
+  // Research operations take 2.5+ minutes (timeout: 10 min = 600s)
   return apiRequest('/module2/research', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  });
+  }, 600000);
 }
 
 export async function runResearchAsync(payload) {
+  // Async research also needs extended timeout
   return apiRequest('/module2/research/async', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  });
+  }, 600000);
 }
 
 export async function getResearchAsyncStatus(jobId) {
@@ -327,9 +329,10 @@ export async function getModule1DataForResearch() {
 }
 
 export async function runResearchFromModule1() {
+  // Research from Module 1 also needs extended timeout
   return apiRequest('/module2/research/from-module1', {
     method: 'POST',
-  });
+  }, 600000);
 }
 
 export async function createModule2Case(payload) {
