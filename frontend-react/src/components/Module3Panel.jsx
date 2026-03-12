@@ -386,8 +386,8 @@ export default function Module3Panel() {
              <section style={{marginBottom: '20px'}}>
                 <h4 style={{borderBottom: '1px solid #eee', paddingBottom: '4px', marginBottom: '8px'}}>3. Critical Risk Factors</h4>
                 <ul style={{fontSize: '13px', paddingLeft: '20px'}}>
-                   {(engine?.guardrailReasons || []).length > 0 ? (
-                      engine.guardrailReasons.map((g, i) => <li key={i} style={{marginBottom: '4px', color: '#b30000'}}>{g}</li>)
+                   {Array.isArray(engine?.guardrailReasons) && engine.guardrailReasons.length > 0 ? (
+                     engine.guardrailReasons.map((g, i) => <li key={i} style={{marginBottom: '4px', color: '#b30000'}}>{g}</li>)
                    ) : <li>No critical automated risk violations detected.</li>}
                 </ul>
              </section>
