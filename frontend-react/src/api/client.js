@@ -185,6 +185,18 @@ export async function uploadDocument(file, category) {
   return apiRequest('/upload', { method: 'POST', body: form }, 180000);
 }
 
+export async function uploadDocuments(files, category) {
+  const list = Array.isArray(files) ? files.filter(Boolean) : [];
+  if (!list.length) {
+    throw new Error('No files selected for upload.');
+  }
+
+  const form = new FormData();
+  list.forEach((file) => form.append('files', file));
+  form.append('category', category || 'auto_detect');
+  return apiRequest('/upload/batch', { method: 'POST', body: form }, 300000);
+}
+
 export async function getDocuments() {
   return apiRequest('/documents');
 }

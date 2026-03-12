@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  uploadDocument,
+  uploadDocuments,
   deleteDocument,
   getDocuments,
   getCompleteness,
@@ -22,11 +22,12 @@ const categories = [
   { value: 'bank_statement', label: 'Bank Statement' },
   { value: 'gst_filing', label: 'GST Filing' },
   { value: 'rating_report', label: 'Rating Report' },
+  { value: 'other', label: 'Others' },
 ];
 
 export default function Module1Panel({ user }) {
   const maxUploadMb = 200;
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [category, setCategory] = useState('auto_detect');
   const [documents, setDocuments] = useState([]);
   const [completeness, setCompleteness] = useState(null);
@@ -69,16 +70,19 @@ export default function Module1Panel({ user }) {
 
   async function handleUpload(e) {
     e.preventDefault();
-    if (!file) return;
-    if (file.size > maxUploadMb * 1024 * 1024) {
-      setError(`Selected file is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max allowed is ${maxUploadMb}MB.`);
+    if (!files.length) return;
+
+    const oversized = files.find((item) => item.size > maxUploadMb * 1024 * 1024);
+    if (oversized) {
+      setError(`File '${oversized.name}' is too large (${(oversized.size / 1024 / 1024).toFixed(1)}MB). Max allowed is ${maxUploadMb}MB.`);
       return;
     }
+
     setLoading(true);
     setError('');
     try {
-      await uploadDocument(file, category);
-      setFile(null);
+      await uploadDocuments(files, category);
+      setFiles([]);
       await refresh();
     } catch (err) {
       setError(err.message);
@@ -237,31 +241,37 @@ export default function Module1Panel({ user }) {
               </label>
 
               <div className="full-width">
-                <span style={{fontWeight: 700, fontSize: '13px', marginBottom: '10px', display: 'block'}}>Source Asset (PDF)</span>
-                <div className={`dropzone-container ${file ? 'active' : ''}`}>
+                <span style={{fontWeight: 700, fontSize: '13px', marginBottom: '10px', display: 'block'}}>Source Assets (PDF / DOC / DOCX)</span>
+                <div className={`dropzone-container ${files.length ? 'active' : ''}`}>
                   <div className="dropzone-icon">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   </div>
-                  <p style={{margin: 0, fontWeight: 600}}>Click to browse or drag & drop</p>
-                  <p className="muted-note" style={{fontSize: '11px', marginTop: '4px'}}>Maximum size: {maxUploadMb}MB</p>
+                  <p style={{margin: 0, fontWeight: 600}}>Click to browse or drag & drop multiple files</p>
+                  <p className="muted-note" style={{fontSize: '11px', marginTop: '4px'}}>Per-file max: {maxUploadMb}MB</p>
                   <input 
                     type="file" 
                     className="file-input-hidden" 
-                    accept="application/pdf" 
-                    onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    multiple
+                    onChange={(e) => setFiles(Array.from(e.target.files || []))}
                   />
-                  
-                  {file && (
-                    <div className="selected-file-info">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                      {file.name} ({(file.size / 1024 / 1024).toFixed(1)}MB)
+
+                  {files.length > 0 ? (
+                    <div style={{marginTop: '10px', display: 'grid', gap: '6px', width: '100%'}}>
+                      {files.slice(0, 10).map((item) => (
+                        <div key={`${item.name}-${item.size}`} className="selected-file-info" style={{display: 'flex', justifyContent: 'space-between', gap: '8px'}}>
+                          <span style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{item.name}</span>
+                          <span>{(item.size / 1024 / 1024).toFixed(1)}MB</span>
+                        </div>
+                      ))}
+                      {files.length > 10 ? <small className="muted-note">+{files.length - 10} more selected</small> : null}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
-              <button type="submit" disabled={!file || loading} className="full-width primary action-btn action-btn-primary" style={{marginTop: '12px'}}>
-                {loading ? 'Executing Pipeline...' : 'Process Document'}
+              <button type="submit" disabled={!files.length || loading} className="full-width primary action-btn action-btn-primary" style={{marginTop: '12px'}}>
+                {loading ? 'Executing Pipeline...' : `Process ${files.length || ''} Document${files.length === 1 ? '' : 's'}`}
               </button>
             </form>
 
@@ -288,7 +298,7 @@ export default function Module1Panel({ user }) {
                     </div>
                     <div>
                       <div style={{fontWeight: 700, fontSize: '13px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{d.filename}</div>
-                      <div style={{fontSize: '11px', color: 'var(--muted)'}}>{d.pageCount} pages • {d.category}</div>
+                      <div style={{fontSize: '11px', color: 'var(--muted)'}}>{d.pageCount} pages • {formatCategoryLabel(d.category)}</div>
                     </div>
                   </div>
                   <button className="secondary" style={{padding: '6px', borderRadius: '8px', background: 'transparent', border: 'none'}} onClick={() => handleDeleteDocument(d.id)} disabled={loading}>
@@ -606,6 +616,14 @@ export default function Module1Panel({ user }) {
       </div>
     </section>
   );
+}
+
+function formatCategoryLabel(value) {
+  const match = categories.find((item) => item.value === value);
+  if (match) return match.label.replace('✨ ', '');
+  return String(value || 'unknown')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
 }
 
 function CompletenessDial({ score }) {

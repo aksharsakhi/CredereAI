@@ -15,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
@@ -97,9 +99,9 @@ public class Module1Controller {
             }
 
             String filename = file.getOriginalFilename();
-            if (filename == null || !filename.toLowerCase().endsWith(".pdf")) {
+            if (!isSupportedUpload(filename)) {
                 return ResponseEntity.badRequest().body(
-                        ApiResponse.<ExtractionResponse>builder().success(false).message("Only PDF files are accepted").build());
+                        ApiResponse.<ExtractionResponse>builder().success(false).message("Only PDF, DOC, and DOCX files are accepted").build());
             }
 
                 long maxBytes = (long) module1Config.getMaxFileSizeMb() * 1024 * 1024;
@@ -125,6 +127,73 @@ public class Module1Controller {
                     ApiResponse.<ExtractionResponse>builder().success(false)
                             .message("Processing failed: " + e.getMessage()).build());
         }
+    }
+
+    @PostMapping("/upload/batch")
+    public ResponseEntity<ApiResponse<BatchExtractionResponse>> uploadDocuments(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "category", defaultValue = "auto_detect") String category) {
+        if (files == null || files.length == 0) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.<BatchExtractionResponse>builder()
+                            .success(false)
+                            .message("No files provided")
+                            .build());
+        }
+
+        List<ExtractionResponse> processed = new ArrayList<>();
+        List<UploadFailure> failed = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            String filename = file != null ? file.getOriginalFilename() : "unknown";
+            try {
+                if (file == null || file.isEmpty()) {
+                    failed.add(UploadFailure.builder().filename(filename).message("File is empty").build());
+                    continue;
+                }
+                if (!isSupportedUpload(filename)) {
+                    failed.add(UploadFailure.builder().filename(filename).message("Unsupported file type").build());
+                    continue;
+                }
+
+                long maxBytes = (long) module1Config.getMaxFileSizeMb() * 1024 * 1024;
+                if (file.getSize() > maxBytes) {
+                    failed.add(UploadFailure.builder()
+                            .filename(filename)
+                            .message("File exceeds max size of " + module1Config.getMaxFileSizeMb() + "MB")
+                            .build());
+                    continue;
+                }
+
+                processed.add(pdfProcessorService.uploadAndProcess(file, category));
+            } catch (Exception e) {
+                log.warn("Batch upload failed for {}: {}", filename, e.getMessage());
+                failed.add(UploadFailure.builder().filename(filename).message(e.getMessage()).build());
+            }
+        }
+
+        BatchExtractionResponse payload = BatchExtractionResponse.builder()
+                .totalFiles(files.length)
+                .processedCount(processed.size())
+                .failedCount(failed.size())
+                .processed(processed)
+                .failed(failed)
+                .build();
+
+        String message = processed.size() + " file(s) processed" + (failed.isEmpty() ? "" : (", " + failed.size() + " failed"));
+        return ResponseEntity.ok(ApiResponse.<BatchExtractionResponse>builder()
+                .success(!processed.isEmpty())
+                .message(message)
+                .data(payload)
+                .build());
+    }
+
+    private boolean isSupportedUpload(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return false;
+        }
+        String lower = filename.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".docx");
     }
 
     @GetMapping("/documents")

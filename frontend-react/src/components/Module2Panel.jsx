@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getModule1DataForResearch,
   runResearchAsync,
@@ -345,7 +345,11 @@ export default function Module2Panel() {
   const regulatoryHeat = summarizeRegulatorySeverity(safeRegulatoryActions);
   const networkTypeBreakdown = summarizeNetworkTypes(safeNetworkNodes);
   const relationshipBreakdown = summarizeRelationships(safeNetworkEdges);
-  const linkedEntityRows = buildLinkedEntityRows(safeNetworkNodes, safeNetworkEdges);
+  const networkAnalytics = useMemo(
+    () => buildDeterministicNetworkAnalytics(safeNetworkNodes, safeNetworkEdges, companyName),
+    [safeNetworkNodes, safeNetworkEdges, companyName]
+  );
+  const linkedEntityRows = buildLinkedEntityRows(safeNetworkNodes, safeNetworkEdges, networkAnalytics);
 
   return (
     <section className="panel">
@@ -613,7 +617,7 @@ export default function Module2Panel() {
                     </div>
                     <span className="chip chip-brand">{safeNetworkNodes.length} linked entities</span>
                   </div>
-                  <NetworkConstellation nodes={safeNetworkNodes} edges={safeNetworkEdges} companyName={companyName} />
+                  <NetworkConstellation analytics={networkAnalytics} />
                 </div>
 
                 <div style={{display: 'grid', gap: '16px'}}>
@@ -628,6 +632,78 @@ export default function Module2Panel() {
                       <strong>High-risk entities:</strong> {linkedEntityRows.filter((row) => row.riskScore >= 0.7).length} node(s) exceed the elevated-risk threshold.
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px'}}>
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Deterministic Network Algorithms</h3>
+                  <div style={{display: 'grid', gap: '10px'}}>
+                    <div style={{padding: '10px', borderRadius: '10px', background: 'var(--surface-2)', border: '1px solid var(--line)'}}>
+                      <strong style={{fontSize: '11px'}}>Weighted Force Layout</strong>
+                      <p style={{margin: '6px 0 0', fontSize: '11px', color: 'var(--muted)'}}>{networkAnalytics.summary.iterations} fixed-iteration deterministic passes</p>
+                    </div>
+                    <div style={{padding: '10px', borderRadius: '10px', background: 'var(--surface-2)', border: '1px solid var(--line)'}}>
+                      <strong style={{fontSize: '11px'}}>Eigen + Degree Centrality</strong>
+                      <p style={{margin: '6px 0 0', fontSize: '11px', color: 'var(--muted)'}}>Structural influence mixed into final risk propagation</p>
+                    </div>
+                    <div style={{padding: '10px', borderRadius: '10px', background: 'var(--surface-2)', border: '1px solid var(--line)'}}>
+                      <strong style={{fontSize: '11px'}}>Shortest-Path Risk Tracing</strong>
+                      <p style={{margin: '6px 0 0', fontSize: '11px', color: 'var(--muted)'}}>Deterministic pathing from anchor entity to elevated-risk nodes</p>
+                    </div>
+                  </div>
+                  <div style={{marginTop: '12px', display: 'grid', gap: '6px', fontSize: '11px'}}>
+                    <span><strong>Density:</strong> {networkAnalytics.summary.density.toFixed(3)}</span>
+                    <span><strong>Avg contagion:</strong> {networkAnalytics.summary.avgContagion.toFixed(3)}</span>
+                    <span><strong>Nodes:</strong> {networkAnalytics.summary.nodeCount} | <strong>Edges:</strong> {networkAnalytics.summary.edgeCount}</span>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Group Contagion Scoring</h3>
+                  {networkAnalytics.groupScores.length === 0 ? (
+                    <p className="muted-note" style={{margin: 0}}>Insufficient graph density for group contagion scoring.</p>
+                  ) : (
+                    <div style={{display: 'grid', gap: '10px'}}>
+                      {networkAnalytics.groupScores.slice(0, 6).map((group) => (
+                        <div key={group.groupId} style={{padding: '10px', borderRadius: '10px', background: 'var(--surface-2)', border: '1px solid var(--line)'}}>
+                          <div className="ratio-head" style={{marginBottom: '6px'}}>
+                            <strong style={{fontSize: '11px'}}>{group.label}</strong>
+                            <span className="chip chip-unknown" style={{fontSize: '8px'}}>{group.memberCount} nodes</span>
+                          </div>
+                          <div style={{height: '6px', background: 'var(--bg-alt)', borderRadius: '999px', overflow: 'hidden'}}>
+                            <span style={{display: 'block', height: '100%', width: `${Math.max(5, group.score * 100)}%`, background: 'linear-gradient(90deg, var(--brand), var(--warn))'}} />
+                          </div>
+                          <div style={{marginTop: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted)'}}>
+                            <span>Contagion {group.score.toFixed(3)}</span>
+                            <span>Spread {group.spread.toFixed(3)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card">
+                  <h3 style={{marginBottom: '1rem', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Risk Traceability Display</h3>
+                  {networkAnalytics.traceability.length === 0 ? (
+                    <p className="muted-note" style={{margin: 0}}>No traceability rows available for the current graph snapshot.</p>
+                  ) : (
+                    <div style={{display: 'grid', gap: '10px'}}>
+                      {networkAnalytics.traceability.slice(0, 5).map((row) => (
+                        <div key={`trace-${row.id}`} style={{padding: '10px', borderRadius: '10px', background: 'var(--surface-2)', border: '1px solid var(--line)'}}>
+                          <div className="ratio-head" style={{marginBottom: '4px'}}>
+                            <strong style={{fontSize: '11px'}}>{row.name}</strong>
+                            <span style={{fontSize: '10px', color: getRiskToneColor(row.finalRisk)}}>{describeRisk(row.finalRisk)}</span>
+                          </div>
+                          <p style={{margin: 0, fontSize: '10px', color: 'var(--muted)', lineHeight: 1.45}}>
+                            R = 0.55×{row.baseRisk.toFixed(2)} + 0.30×{row.contagionScore.toFixed(2)} + 0.15×{row.centralityScore.toFixed(2)} = {row.finalRisk.toFixed(2)}
+                          </p>
+                          <p style={{margin: '6px 0 0', fontSize: '10px', color: 'var(--muted)'}}>{row.pathText}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -701,7 +777,7 @@ export default function Module2Panel() {
                           <span className="chip chip-unknown" style={{fontSize: '8px'}}>{row.type}</span>
                         </div>
                         <p style={{fontSize: '11px', margin: 0, color: 'var(--muted)', lineHeight: 1.45}}>
-                          {row.relationship} relationship with {row.connections} traceable link(s) and risk intensity {row.riskLabel.toLowerCase()}.
+                          {row.relationship} relationship with {row.connections} traceable link(s), contagion {row.contagionScore.toFixed(2)} and risk intensity {row.riskLabel.toLowerCase()}.
                         </p>
                       </div>
                     ))}
@@ -1079,8 +1155,32 @@ function ScoreBars({ data }) {
   );
 }
 
-function NetworkConstellation({ nodes, edges, companyName }) {
-  if (!Array.isArray(nodes) || nodes.length === 0) {
+function NetworkConstellation({ analytics }) {
+  const wrapRef = useRef(null);
+  const dragRef = useRef(null);
+  const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const displayNodes = analytics?.displayNodes || [];
+  const displayEdges = analytics?.displayEdges || [];
+  const coreNodeId = analytics?.coreNodeId || null;
+  const positions = analytics?.positions || new Map();
+
+  useEffect(() => {
+    setViewport({ scale: 1, x: 0, y: 0 });
+  }, [analytics?.graphVersion]);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      const current = wrapRef.current;
+      setIsFullscreen(Boolean(current && document.fullscreenElement && (document.fullscreenElement === current || current.contains(document.fullscreenElement))));
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  if (!displayNodes.length) {
     return (
       <div style={{minHeight: '320px', display: 'grid', placeItems: 'center', background: 'radial-gradient(circle at center, color-mix(in srgb, var(--brand) 10%, transparent), transparent 65%)', borderRadius: '20px', border: '1px dashed var(--line)'}}>
         <p style={{margin: 0, color: 'var(--muted)', fontSize: '12px'}}>Network visualization will appear when structured entity data is available.</p>
@@ -1088,16 +1188,89 @@ function NetworkConstellation({ nodes, edges, companyName }) {
     );
   }
 
-  const displayNodes = nodes.slice(0, 19);
-  const coreNode = pickCoreNode(displayNodes, companyName);
-  const others = displayNodes.filter((node) => node.id !== coreNode.id);
-  const positions = buildConstellationPositions(coreNode, others);
-  const visibleNodeIds = new Set(displayNodes.map((node) => node.id));
-  const visibleEdges = (Array.isArray(edges) ? edges : []).filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)).slice(0, 28);
+  function handleZoom(factor) {
+    setViewport((prev) => ({
+      ...prev,
+      scale: Math.max(0.45, Math.min(2.6, Number((prev.scale * factor).toFixed(3)))),
+    }));
+  }
+
+  function handleFitToPage() {
+    const box = computeBounds(displayNodes, positions);
+    const safeWidth = Math.max(40, box.maxX - box.minX);
+    const safeHeight = Math.max(40, box.maxY - box.minY);
+    const targetScale = Math.max(0.5, Math.min(1.8, Math.min((640 - 90) / safeWidth, (380 - 70) / safeHeight)));
+    const centerX = (box.minX + box.maxX) / 2;
+    const centerY = (box.minY + box.maxY) / 2;
+    setViewport({
+      scale: targetScale,
+      x: 320 - centerX * targetScale,
+      y: 190 - centerY * targetScale,
+    });
+  }
+
+  async function handleToggleFullscreen() {
+    try {
+      if (!document.fullscreenElement && wrapRef.current) {
+        await wrapRef.current.requestFullscreen();
+      } else if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Fullscreen calls are best-effort only.
+    }
+  }
+
+  function onMouseDown(event) {
+    dragRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      startX: viewport.x,
+      startY: viewport.y,
+    };
+  }
+
+  function onMouseMove(event) {
+    if (!dragRef.current) return;
+    const dx = event.clientX - dragRef.current.x;
+    const dy = event.clientY - dragRef.current.y;
+    setViewport((prev) => ({ ...prev, x: dragRef.current.startX + dx, y: dragRef.current.startY + dy }));
+  }
+
+  function onMouseUp() {
+    dragRef.current = null;
+  }
+
+  function onWheel(event) {
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 1.1 : 0.9;
+    handleZoom(delta);
+  }
 
   return (
     <div style={{display: 'grid', gap: '14px'}}>
-      <div style={{position: 'relative', minHeight: '370px', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--line)', background: 'radial-gradient(circle at 50% 46%, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.03) 28%, transparent 55%), linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface)) 0%, var(--surface-2) 100%)'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <button type="button" className="secondary action-btn action-btn-inline" onClick={() => handleZoom(1.12)} style={{minWidth: '44px'}}>+</button>
+          <button type="button" className="secondary action-btn action-btn-inline" onClick={() => handleZoom(0.9)} style={{minWidth: '44px'}}>-</button>
+          <button type="button" className="secondary action-btn action-btn-inline" onClick={handleFitToPage}>Fit to page</button>
+          <button type="button" className="secondary action-btn action-btn-inline" onClick={() => setViewport({ scale: 1, x: 0, y: 0 })}>Reset</button>
+        </div>
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <span className="chip chip-brand" style={{fontSize: '10px'}}>Zoom {(viewport.scale * 100).toFixed(0)}%</span>
+          <button type="button" className="secondary action-btn action-btn-inline" onClick={handleToggleFullscreen}>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</button>
+        </div>
+      </div>
+
+      <div
+        ref={wrapRef}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onWheel={onWheel}
+        style={{position: 'relative', minHeight: '370px', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--line)', cursor: dragRef.current ? 'grabbing' : 'grab', background: 'radial-gradient(circle at 50% 46%, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.03) 28%, transparent 55%), linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface)) 0%, var(--surface-2) 100%)'}}
+      >
         <svg viewBox="0 0 640 380" style={{width: '100%', height: '100%'}}>
           <defs>
             <radialGradient id="network-halo" cx="50%" cy="50%" r="65%">
@@ -1105,47 +1278,51 @@ function NetworkConstellation({ nodes, edges, companyName }) {
               <stop offset="100%" stopColor="rgba(51, 153, 255, 0)" />
             </radialGradient>
           </defs>
-          <circle cx="320" cy="190" r="82" fill="url(#network-halo)" />
-          <circle cx="320" cy="190" r="118" fill="none" stroke="rgba(255,255,255,0.08)" strokeDasharray="5 7" />
-          <circle cx="320" cy="190" r="168" fill="none" stroke="rgba(255,255,255,0.06)" strokeDasharray="5 7" />
-          <circle cx="320" cy="190" r="214" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="4 8" />
+          <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.scale})`}>
+            <circle cx="320" cy="190" r="82" fill="url(#network-halo)" />
+            <circle cx="320" cy="190" r="118" fill="none" stroke="rgba(255,255,255,0.08)" strokeDasharray="5 7" />
+            <circle cx="320" cy="190" r="168" fill="none" stroke="rgba(255,255,255,0.06)" strokeDasharray="5 7" />
+            <circle cx="320" cy="190" r="214" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="4 8" />
 
-          {visibleEdges.map((edge, index) => {
-            const source = positions.get(edge.source);
-            const target = positions.get(edge.target);
-            if (!source || !target) return null;
-            const opacity = 0.24 + Math.min(0.42, Number(edge.weight || 0.3));
-            return (
-              <g key={`${edge.source}-${edge.target}-${index}`}>
-                <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={`rgba(131, 196, 255, ${opacity})`} strokeWidth={1.5 + Math.max(0.4, Number(edge.weight || 0.3))} />
-                <text x={(source.x + target.x) / 2} y={(source.y + target.y) / 2 - 6} textAnchor="middle" fill="rgba(255,255,255,0.72)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
-                  {truncate(edge.relationship || 'linked', 16)}
-                </text>
-              </g>
-            );
-          })}
+            {displayEdges.map((edge, index) => {
+              const source = positions.get(edge.source);
+              const target = positions.get(edge.target);
+              if (!source || !target) return null;
+              const opacity = 0.24 + Math.min(0.42, Number(edge.weight || 0.3));
+              return (
+                <g key={`${edge.source}-${edge.target}-${index}`}>
+                  <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={`rgba(131, 196, 255, ${opacity})`} strokeWidth={1.5 + Math.max(0.4, Number(edge.weight || 0.3))} />
+                  <text x={(source.x + target.x) / 2} y={(source.y + target.y) / 2 - 6} textAnchor="middle" fill="rgba(255,255,255,0.72)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
+                    {truncate(edge.relationship || 'linked', 16)}
+                  </text>
+                </g>
+              );
+            })}
 
-          {displayNodes.map((node) => {
-            const position = positions.get(node.id);
-            if (!position) return null;
-            const nodeColor = getRiskToneColor(node.riskScore);
-            const labelColor = node.id === coreNode.id ? 'var(--text)' : 'rgba(255,255,255,0.86)';
-            return (
-              <g key={node.id}>
-                <circle cx={position.x} cy={position.y} r={position.radius + 10} fill={hexToRgba(nodeColor, 0.12)} />
-                <circle cx={position.x} cy={position.y} r={position.radius} fill={nodeColor} stroke="rgba(255,255,255,0.95)" strokeWidth={node.id === coreNode.id ? 3 : 2} />
-                <text x={position.x} y={position.y + 3} textAnchor="middle" fill="#fff" style={{fontSize: node.id === coreNode.id ? '11px' : '10px', fontWeight: 800, letterSpacing: '0.04em'}}>
-                  {getInitials(node.name)}
-                </text>
-                <text x={position.x} y={position.y + position.radius + 18} textAnchor="middle" fill={labelColor} style={{fontSize: node.id === coreNode.id ? '12px' : '10px', fontWeight: node.id === coreNode.id ? 800 : 600}}>
-                  {truncate(node.name || node.id, node.id === coreNode.id ? 26 : 18)}
-                </text>
-                <text x={position.x} y={position.y + position.radius + 30} textAnchor="middle" fill="rgba(255,255,255,0.56)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
-                  {(node.relationship || node.type || 'linked').replaceAll('_', ' ')}
-                </text>
-              </g>
-            );
-          })}
+            {displayNodes.map((node) => {
+              const position = positions.get(node.id);
+              if (!position) return null;
+              const nodeMetrics = analytics.nodeMetrics.get(node.id);
+              const nodeColor = getRiskToneColor(nodeMetrics?.finalRisk ?? node.riskScore);
+              const isCore = node.id === coreNodeId;
+              const labelColor = isCore ? 'var(--text)' : 'rgba(255,255,255,0.86)';
+              return (
+                <g key={node.id}>
+                  <circle cx={position.x} cy={position.y} r={position.radius + 10} fill={hexToRgba(nodeColor, 0.12)} />
+                  <circle cx={position.x} cy={position.y} r={position.radius} fill={nodeColor} stroke="rgba(255,255,255,0.95)" strokeWidth={isCore ? 3 : 2} />
+                  <text x={position.x} y={position.y + 3} textAnchor="middle" fill="#fff" style={{fontSize: isCore ? '11px' : '10px', fontWeight: 800, letterSpacing: '0.04em'}}>
+                    {getInitials(node.name)}
+                  </text>
+                  <text x={position.x} y={position.y + position.radius + 18} textAnchor="middle" fill={labelColor} style={{fontSize: isCore ? '12px' : '10px', fontWeight: isCore ? 800 : 600}}>
+                    {truncate(node.name || node.id, isCore ? 26 : 18)}
+                  </text>
+                  <text x={position.x} y={position.y + position.radius + 30} textAnchor="middle" fill="rgba(255,255,255,0.56)" style={{fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase'}}>
+                    {(node.relationship || node.type || 'linked').replaceAll('_', ' ')}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
@@ -1348,16 +1525,19 @@ function summarizeRelationships(edges) {
   return Object.fromEntries(Object.entries(summary).sort((a, b) => b[1] - a[1]));
 }
 
-function buildLinkedEntityRows(nodes, edges) {
+function buildLinkedEntityRows(nodes, edges, analytics) {
   const edgeRows = Array.isArray(edges) ? edges : [];
   return (Array.isArray(nodes) ? nodes : []).map((node) => {
-    const riskScore = Number(node?.riskScore) || 0;
+    const id = node?.id || node?.name || 'node';
+    const metric = analytics?.nodeMetrics?.get(id);
+    const riskScore = metric?.finalRisk ?? (Number(node?.riskScore) || 0);
     return {
-      id: node?.id || node?.name || 'node',
+      id,
       name: node?.name || 'Unnamed entity',
       type: normalizeLabel(node?.type || 'other'),
       relationship: normalizeLabel(node?.relationship || 'linked entity'),
       riskScore,
+      contagionScore: metric?.contagionScore ?? 0,
       riskLabel: describeRisk(riskScore),
       connections: edgeRows.filter((edge) => edge?.source === node?.id || edge?.target === node?.id).length,
       initials: getInitials(node?.name),
@@ -1373,24 +1553,452 @@ function pickCoreNode(nodes, companyName) {
     || nodes[0];
 }
 
-function buildConstellationPositions(coreNode, otherNodes) {
-  const positions = new Map();
-  positions.set(coreNode.id, { x: 320, y: 190, radius: 34 + Math.min(14, (Number(coreNode.riskScore) || 0) * 14) });
+function buildDeterministicNetworkAnalytics(nodes, edges, companyName) {
+  const sourceNodes = Array.isArray(nodes) ? nodes : [];
+  const sourceEdges = Array.isArray(edges) ? edges : [];
 
-  otherNodes.forEach((node, index) => {
-    const ring = index < 6 ? 0 : index < 12 ? 1 : 2;
-    const ringRadius = [118, 168, 214][ring];
-    const ringCount = [Math.min(otherNodes.length, 6), Math.max(0, Math.min(otherNodes.length - 6, 6)), Math.max(0, otherNodes.length - 12)][ring] || 1;
-    const ringOffset = ring === 0 ? index : ring === 1 ? index - 6 : index - 12;
-    const angle = (-Math.PI / 2) + ((Math.PI * 2) / ringCount) * ringOffset;
-    positions.set(node.id, {
-      x: 320 + Math.cos(angle) * ringRadius,
-      y: 190 + Math.sin(angle) * ringRadius,
-      radius: 20 + Math.min(10, (Number(node.riskScore) || 0) * 12),
+  const normalizedNodes = sourceNodes
+    .map((node, index) => ({
+      ...node,
+      id: String(node?.id || node?.name || `node-${index}`),
+      name: String(node?.name || node?.id || `Entity ${index + 1}`),
+      riskScore: clamp01(node?.riskScore),
+    }))
+    .slice(0, 40);
+
+  if (!normalizedNodes.length) {
+    return {
+      graphVersion: 'empty',
+      coreNodeId: null,
+      positions: new Map(),
+      displayNodes: [],
+      displayEdges: [],
+      nodeMetrics: new Map(),
+      groupScores: [],
+      traceability: [],
+      summary: {
+        nodeCount: 0,
+        edgeCount: 0,
+        density: 0,
+        avgContagion: 0,
+        iterations: 0,
+      },
+    };
+  }
+
+  const nodeIds = new Set(normalizedNodes.map((node) => node.id));
+  const normalizedEdges = sourceEdges
+    .map((edge) => ({
+      source: String(edge?.source || ''),
+      target: String(edge?.target || ''),
+      relationship: String(edge?.relationship || 'linked'),
+      weight: normalizeEdgeWeight(edge?.weight, edge?.relationship),
+    }))
+    .filter((edge) => edge.source && edge.target && edge.source !== edge.target && nodeIds.has(edge.source) && nodeIds.has(edge.target));
+
+  const coreNode = pickCoreNode(normalizedNodes, companyName);
+  const layout = computeDeterministicForceLayout(normalizedNodes, normalizedEdges, coreNode.id);
+  const centralityScores = computeDeterministicCentrality(normalizedNodes, normalizedEdges);
+  const contagionScores = computeGroupContagionScores(normalizedNodes, normalizedEdges);
+  const traceability = buildRiskTraceability(normalizedNodes, normalizedEdges, coreNode.id, centralityScores, contagionScores.nodeScores);
+
+  const nodeMetrics = new Map(
+    traceability.map((row) => [
+      row.id,
+      {
+        baseRisk: row.baseRisk,
+        contagionScore: row.contagionScore,
+        centralityScore: row.centralityScore,
+        finalRisk: row.finalRisk,
+      },
+    ])
+  );
+
+  const displayNodeIds = new Set(
+    traceability
+      .slice()
+      .sort((a, b) => b.finalRisk - a.finalRisk || b.centralityScore - a.centralityScore)
+      .slice(0, 24)
+      .map((row) => row.id)
+  );
+  displayNodeIds.add(coreNode.id);
+
+  const displayNodes = normalizedNodes.filter((node) => displayNodeIds.has(node.id));
+  const displayEdges = normalizedEdges
+    .filter((edge) => displayNodeIds.has(edge.source) && displayNodeIds.has(edge.target))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 52);
+
+  const nodeCount = normalizedNodes.length;
+  const edgeCount = normalizedEdges.length;
+  const density = nodeCount > 1 ? edgeCount / (nodeCount * (nodeCount - 1)) : 0;
+  const avgContagion = traceability.length
+    ? traceability.reduce((acc, row) => acc + row.contagionScore, 0) / traceability.length
+    : 0;
+
+  return {
+    graphVersion: `${coreNode.id}-${nodeCount}-${edgeCount}`,
+    coreNodeId: coreNode.id,
+    positions: layout.positions,
+    displayNodes,
+    displayEdges,
+    nodeMetrics,
+    groupScores: contagionScores.groupScores,
+    traceability: traceability.sort((a, b) => b.finalRisk - a.finalRisk).slice(0, 16),
+    summary: {
+      nodeCount,
+      edgeCount,
+      density,
+      avgContagion,
+      iterations: layout.iterations,
+    },
+  };
+}
+
+function computeDeterministicForceLayout(nodes, edges, coreNodeId) {
+  const width = 640;
+  const height = 380;
+  const nodeOrder = nodes.map((node) => node.id).sort();
+  const positionMap = new Map();
+  const nodeCount = Math.max(1, nodeOrder.length);
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  nodeOrder.forEach((id, index) => {
+    const hash = stableHash(id);
+    const angle = ((hash % 360) * Math.PI) / 180;
+    const ring = 70 + (index % 4) * 38;
+    positionMap.set(id, {
+      x: centerX + Math.cos(angle) * ring,
+      y: centerY + Math.sin(angle) * ring,
+      radius: 16,
     });
   });
 
-  return positions;
+  const area = width * height;
+  const k = Math.sqrt(area / nodeCount);
+  const iterations = 80;
+  let temperature = 42;
+  const sortedEdges = edges
+    .slice()
+    .sort((a, b) => `${a.source}-${a.target}`.localeCompare(`${b.source}-${b.target}`));
+
+  for (let step = 0; step < iterations; step += 1) {
+    const disp = new Map(nodeOrder.map((id) => [id, { x: 0, y: 0 }]));
+
+    for (let i = 0; i < nodeOrder.length; i += 1) {
+      for (let j = i + 1; j < nodeOrder.length; j += 1) {
+        const a = nodeOrder[i];
+        const b = nodeOrder[j];
+        const posA = positionMap.get(a);
+        const posB = positionMap.get(b);
+        const dx = posA.x - posB.x;
+        const dy = posA.y - posB.y;
+        const dist = Math.max(0.01, Math.sqrt(dx * dx + dy * dy));
+        const repulse = (k * k) / dist;
+        const fx = (dx / dist) * repulse;
+        const fy = (dy / dist) * repulse;
+        disp.get(a).x += fx;
+        disp.get(a).y += fy;
+        disp.get(b).x -= fx;
+        disp.get(b).y -= fy;
+      }
+    }
+
+    sortedEdges.forEach((edge) => {
+      const posA = positionMap.get(edge.source);
+      const posB = positionMap.get(edge.target);
+      if (!posA || !posB) return;
+      const dx = posA.x - posB.x;
+      const dy = posA.y - posB.y;
+      const dist = Math.max(0.01, Math.sqrt(dx * dx + dy * dy));
+      const attract = ((dist * dist) / k) * (0.55 + edge.weight * 0.7);
+      const fx = (dx / dist) * attract;
+      const fy = (dy / dist) * attract;
+      disp.get(edge.source).x -= fx;
+      disp.get(edge.source).y -= fy;
+      disp.get(edge.target).x += fx;
+      disp.get(edge.target).y += fy;
+    });
+
+    nodeOrder.forEach((id) => {
+      const pos = positionMap.get(id);
+      const d = disp.get(id);
+      if (id === coreNodeId) {
+        pos.x = centerX;
+        pos.y = centerY;
+      } else {
+        d.x += (centerX - pos.x) * 0.012;
+        d.y += (centerY - pos.y) * 0.012;
+        const dist = Math.max(0.01, Math.sqrt(d.x * d.x + d.y * d.y));
+        const stepSize = Math.min(temperature, dist);
+        pos.x += (d.x / dist) * stepSize;
+        pos.y += (d.y / dist) * stepSize;
+        pos.x = Math.min(width - 36, Math.max(36, pos.x));
+        pos.y = Math.min(height - 28, Math.max(28, pos.y));
+      }
+    });
+
+    temperature *= 0.94;
+  }
+
+  nodes.forEach((node) => {
+    const pos = positionMap.get(node.id);
+    const risk = clamp01(node.riskScore);
+    positionMap.set(node.id, {
+      ...pos,
+      radius: node.id === coreNodeId ? 30 : 18 + risk * 10,
+    });
+  });
+
+  return { positions: positionMap, iterations };
+}
+
+function computeDeterministicCentrality(nodes, edges) {
+  const ids = nodes.map((node) => node.id).sort();
+  const adjacency = new Map(ids.map((id) => [id, []]));
+
+  edges.forEach((edge) => {
+    adjacency.get(edge.source)?.push({ id: edge.target, weight: edge.weight });
+    adjacency.get(edge.target)?.push({ id: edge.source, weight: edge.weight * 0.95 });
+  });
+
+  const degreeMap = new Map(
+    ids.map((id) => [
+      id,
+      adjacency
+        .get(id)
+        .reduce((acc, link) => acc + link.weight, 0),
+    ])
+  );
+  const maxDegree = Math.max(...Array.from(degreeMap.values()), 1);
+
+  let eigen = new Map(ids.map((id) => [id, 1 / ids.length]));
+  for (let i = 0; i < 14; i += 1) {
+    const next = new Map(ids.map((id) => [id, 0]));
+    ids.forEach((id) => {
+      const links = adjacency.get(id);
+      const outWeight = Math.max(0.0001, links.reduce((acc, link) => acc + link.weight, 0));
+      links.forEach((link) => {
+        next.set(link.id, next.get(link.id) + (eigen.get(id) * link.weight) / outWeight);
+      });
+    });
+
+    const norm = Math.max(0.0001, Math.sqrt(Array.from(next.values()).reduce((acc, value) => acc + value * value, 0)));
+    ids.forEach((id) => next.set(id, next.get(id) / norm));
+    eigen = next;
+  }
+
+  const maxEigen = Math.max(...Array.from(eigen.values()), 1);
+  return new Map(
+    ids.map((id) => {
+      const degreeScore = degreeMap.get(id) / maxDegree;
+      const eigenScore = eigen.get(id) / maxEigen;
+      return [id, clamp01(0.45 * degreeScore + 0.55 * eigenScore)];
+    })
+  );
+}
+
+function computeGroupContagionScores(nodes, edges) {
+  const ids = nodes.map((node) => node.id).sort();
+  const out = new Map(ids.map((id) => [id, []]));
+
+  edges.forEach((edge) => {
+    out.get(edge.source)?.push({ id: edge.target, weight: edge.weight });
+    out.get(edge.target)?.push({ id: edge.source, weight: edge.weight * 0.9 });
+  });
+
+  const base = new Map(nodes.map((node) => [node.id, clamp01(node.riskScore)]));
+  let scores = new Map(ids.map((id) => [id, base.get(id) ?? 0]));
+  const alpha = 0.62;
+
+  for (let step = 0; step < 12; step += 1) {
+    const next = new Map(ids.map((id) => [id, 0]));
+    ids.forEach((id) => {
+      const links = out.get(id);
+      const outWeight = Math.max(0.0001, links.reduce((acc, link) => acc + link.weight, 0));
+      links.forEach((link) => {
+        next.set(link.id, next.get(link.id) + (scores.get(id) * link.weight) / outWeight);
+      });
+    });
+    ids.forEach((id) => {
+      const blended = (1 - alpha) * (base.get(id) ?? 0) + alpha * next.get(id);
+      next.set(id, clamp01(blended));
+    });
+    scores = next;
+  }
+
+  const groups = buildDeterministicGroups(ids, out);
+  const groupScores = groups
+    .map((group, index) => {
+      const memberScores = group.map((id) => scores.get(id) ?? 0);
+      const memberMean = memberScores.reduce((acc, value) => acc + value, 0) / Math.max(1, memberScores.length);
+      const spread = Math.max(...memberScores, 0) - Math.min(...memberScores, 0);
+      const cohesion = estimateGroupCohesion(group, out);
+      const score = clamp01(memberMean * 0.72 + cohesion * 0.2 + spread * 0.08);
+      return {
+        groupId: `G-${index + 1}`,
+        label: `Cluster ${index + 1}`,
+        memberCount: group.length,
+        score,
+        spread,
+      };
+    })
+    .sort((a, b) => b.score - a.score || b.memberCount - a.memberCount);
+
+  return { nodeScores: scores, groupScores };
+}
+
+function buildDeterministicGroups(ids, adjacency) {
+  const unvisited = new Set(ids);
+  const groups = [];
+  while (unvisited.size) {
+    const start = Array.from(unvisited).sort()[0];
+    const queue = [start];
+    const group = [];
+    unvisited.delete(start);
+    while (queue.length) {
+      const current = queue.shift();
+      group.push(current);
+      const neighbors = (adjacency.get(current) || []).map((entry) => entry.id).sort();
+      neighbors.forEach((next) => {
+        if (unvisited.has(next)) {
+          unvisited.delete(next);
+          queue.push(next);
+        }
+      });
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
+function estimateGroupCohesion(group, adjacency) {
+  if (group.length <= 1) return 0;
+  const memberSet = new Set(group);
+  let internalWeight = 0;
+  let totalWeight = 0;
+  group.forEach((id) => {
+    (adjacency.get(id) || []).forEach((edge) => {
+      totalWeight += edge.weight;
+      if (memberSet.has(edge.id)) {
+        internalWeight += edge.weight;
+      }
+    });
+  });
+  return clamp01(totalWeight ? internalWeight / totalWeight : 0);
+}
+
+function buildRiskTraceability(nodes, edges, coreNodeId, centralityScores, contagionScores) {
+  const idToNode = new Map(nodes.map((node) => [node.id, node]));
+  const paths = buildShortestPaths(coreNodeId, nodes, edges);
+  return nodes.map((node) => {
+    const baseRisk = clamp01(node.riskScore);
+    const contagionScore = clamp01(contagionScores.get(node.id) ?? baseRisk);
+    const centralityScore = clamp01(centralityScores.get(node.id) ?? 0);
+    const finalRisk = clamp01(baseRisk * 0.55 + contagionScore * 0.3 + centralityScore * 0.15);
+    const path = paths.get(node.id) || [node.id];
+    const pathText = path
+      .map((id) => truncate(idToNode.get(id)?.name || id, 18))
+      .join(' -> ');
+    return {
+      id: node.id,
+      name: node.name,
+      baseRisk,
+      contagionScore,
+      centralityScore,
+      finalRisk,
+      pathText: path.length > 1 ? `Trace: ${pathText}` : 'Trace: Anchor entity',
+    };
+  });
+}
+
+function buildShortestPaths(coreNodeId, nodes, edges) {
+  const ids = nodes.map((node) => node.id);
+  const adjacency = new Map(ids.map((id) => [id, []]));
+
+  edges.forEach((edge) => {
+    const distance = 1 / Math.max(0.05, edge.weight);
+    adjacency.get(edge.source)?.push({ id: edge.target, distance });
+    adjacency.get(edge.target)?.push({ id: edge.source, distance });
+  });
+
+  const dist = new Map(ids.map((id) => [id, Number.POSITIVE_INFINITY]));
+  const prev = new Map();
+  dist.set(coreNodeId, 0);
+
+  const unvisited = new Set(ids);
+  while (unvisited.size) {
+    const current = Array.from(unvisited).reduce((best, id) => (dist.get(id) < dist.get(best) ? id : best), Array.from(unvisited)[0]);
+    unvisited.delete(current);
+    (adjacency.get(current) || []).forEach((edge) => {
+      if (!unvisited.has(edge.id)) return;
+      const candidate = dist.get(current) + edge.distance;
+      if (candidate < dist.get(edge.id)) {
+        dist.set(edge.id, candidate);
+        prev.set(edge.id, current);
+      }
+    });
+  }
+
+  const paths = new Map();
+  ids.forEach((id) => {
+    if (id === coreNodeId || !prev.has(id)) {
+      paths.set(id, [id]);
+      return;
+    }
+    const path = [id];
+    let cursor = id;
+    while (prev.has(cursor)) {
+      cursor = prev.get(cursor);
+      path.push(cursor);
+      if (cursor === coreNodeId) break;
+    }
+    paths.set(id, path.reverse());
+  });
+  return paths;
+}
+
+function computeBounds(nodes, positions) {
+  const initial = { minX: 320, minY: 190, maxX: 320, maxY: 190 };
+  return nodes.reduce((acc, node) => {
+    const pos = positions.get(node.id);
+    if (!pos) return acc;
+    return {
+      minX: Math.min(acc.minX, pos.x - pos.radius),
+      minY: Math.min(acc.minY, pos.y - pos.radius),
+      maxX: Math.max(acc.maxX, pos.x + pos.radius),
+      maxY: Math.max(acc.maxY, pos.y + pos.radius),
+    };
+  }, initial);
+}
+
+function stableHash(value) {
+  const text = String(value || '');
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash *= 16777619;
+  }
+  return Math.abs(hash >>> 0);
+}
+
+function normalizeEdgeWeight(rawWeight, relationship) {
+  const base = Number(rawWeight);
+  const safeBase = Number.isFinite(base) && base > 0 ? Math.min(1.4, base) : 0.45;
+  const rel = String(relationship || '').toLowerCase();
+  const relationBoost = rel.includes('parent') || rel.includes('promoter') || rel.includes('owns')
+    ? 0.22
+    : rel.includes('director') || rel.includes('stake')
+      ? 0.12
+      : 0.04;
+  return Math.min(1.5, safeBase + relationBoost);
+}
+
+function clamp01(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
 }
 
 function lookupNodeName(nodes, id) {

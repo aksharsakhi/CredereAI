@@ -18,7 +18,8 @@ public class FinancialData {
         FINANCIAL_STATEMENT("financial_statement"),
         BANK_STATEMENT("bank_statement"),
         GST_FILING("gst_filing"),
-        RATING_REPORT("rating_report");
+        RATING_REPORT("rating_report"),
+        OTHER("other");
 
         private final String value;
         DocumentCategory(String value) { this.value = value; }
