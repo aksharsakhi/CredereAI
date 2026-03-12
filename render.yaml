@@ -5,7 +5,7 @@ services:
     env: docker
     dockerContext: backend-java
     dockerfilePath: backend-java/Dockerfile
-    plan: free
+    plan: starter
     region: singapore
     envVars:
       - key: LLM_PROVIDER
@@ -21,7 +21,7 @@ services:
   - type: web
     name: credere-frontend
     runtime: static
-    plan: free
+    plan: starter
     buildCommand: cd frontend-react && npm install && npm run build
     staticPublishPath: frontend-react/dist
     envVars:
