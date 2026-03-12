@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 
 const WORKFLOW_STEPS = [
-  { icon: '📄', label: 'Upload Financials', desc: 'Ingest PDFs, DOC, DOCX borrower documents' },
-  { icon: '📊', label: 'Financial IQ', desc: 'Auto-extract revenue, debt, ratios, completeness' },
-  { icon: '🔎', label: 'Intelligence Scan', desc: 'Promoter, litigation, regulatory, network signals' },
-  { icon: '⚖️', label: 'Risk Engine', desc: 'Evidence-grounded risk scoring & recommendations' },
-  { icon: '📑', label: 'Decision Pack', desc: 'Committee-ready credit notes & action items' },
+  { icon: '📄', label: 'Upload Financials', desc: 'Ingest PDFs, DOC, DOCX borrower documents', detail: 'Supports batch upload up to 220 MB. Auto-detects document type.' },
+  { icon: '📊', label: 'Financial IQ', desc: 'Auto-extract revenue, debt, ratios, completeness', detail: 'AI-powered extraction with cross-verification and anomaly detection.' },
+  { icon: '🔎', label: 'Intelligence Scan', desc: 'Promoter, litigation, regulatory, network signals', detail: 'Async scans across multiple signal sources in parallel.' },
+  { icon: '⚖️', label: 'Risk Engine', desc: 'Evidence-grounded risk scoring & recommendations', detail: 'Deterministic algorithms plus AI synthesis for balanced insights.' },
+  { icon: '📑', label: 'Decision Pack', desc: 'Committee-ready credit notes & action items', detail: 'One-click export of evidence-backed credit committee reports.' },
 ];
 
 const MODULES = [
@@ -173,20 +173,30 @@ export default function IntroPage({ onGetStarted }) {
       </section>
 
       {/* Workflow */}
-      <section className="hp-section hp-reveal" id="workflow">
+      <section className="hp-section hp-section-alt hp-reveal" id="workflow">
         <div className="hp-contain">
-          <p className="hp-kicker">How It Works</p>
-          <h2 className="hp-section-title">From Documents to Decisions in Minutes</h2>
-          <div className="hp-workflow">
+          <div className="hp-center">
+            <p className="hp-kicker">How It Works</p>
+            <h2 className="hp-section-title">From Documents to Decisions in Minutes</h2>
+            <p className="hp-section-sub" style={{ margin: '0 auto 8px' }}>Five steps. One seamless pipeline. Full audit trail at every stage.</p>
+          </div>
+          <div className="hp-wf-timeline">
+            <div className="hp-wf-line" aria-hidden="true" />
             {WORKFLOW_STEPS.map((s, i) => (
-              <React.Fragment key={i}>
-                <div className="hp-wf-step">
-                  <span className="hp-wf-icon">{s.icon}</span>
-                  <strong>{s.label}</strong>
-                  <span className="hp-wf-desc">{s.desc}</span>
+              <div className={`hp-wf-card ${i % 2 === 0 ? 'hp-wf-left' : 'hp-wf-right'}`} key={i}>
+                <div className="hp-wf-node" aria-hidden="true">
+                  <span className="hp-wf-node-num">{i + 1}</span>
+                  <span className="hp-wf-node-pulse" />
                 </div>
-                {i < WORKFLOW_STEPS.length - 1 && <div className="hp-wf-arrow" aria-hidden="true" />}
-              </React.Fragment>
+                <div className="hp-wf-content">
+                  <span className="hp-wf-icon">{s.icon}</span>
+                  <div className="hp-wf-text">
+                    <strong>{s.label}</strong>
+                    <span className="hp-wf-desc">{s.desc}</span>
+                    <span className="hp-wf-detail">{s.detail}</span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
