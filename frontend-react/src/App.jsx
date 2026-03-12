@@ -99,14 +99,12 @@ export default function App() {
 
   if (!started) {
     return (
-      <main className="content intro-shell">
-        <IntroPage
-          onGetStarted={() => {
-            setStarted(true);
-            setActive('module1');
-          }}
-        />
-      </main>
+      <IntroPage
+        onGetStarted={() => {
+          setStarted(true);
+          setActive('module1');
+        }}
+      />
     );
   }
 
