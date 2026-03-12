@@ -1,6 +1,31 @@
 const AUTH_TOKEN_KEY = 'credere_auth_token';
 const API_CANDIDATE_BASES = buildCandidateApiBases();
 
+function safeLocalStorageGet(key, fallback = '') {
+  try {
+    const value = localStorage.getItem(key);
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeLocalStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures so API calls still work without persisted auth.
+  }
+}
+
+function safeLocalStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures so logout does not break the UI.
+  }
+}
+
 function buildCandidateApiBases() {
   const runtimeBase = (typeof window !== 'undefined' && window.__VITE_API_BASE) ? String(window.__VITE_API_BASE) : '';
   const envBase = (import.meta?.env?.VITE_API_BASE || runtimeBase || '').trim();
@@ -53,15 +78,15 @@ function normalizeBase(base) {
 }
 
 function getAuthToken() {
-  return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  return safeLocalStorageGet(AUTH_TOKEN_KEY, '');
 }
 
 function setAuthToken(token) {
   if (token) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    safeLocalStorageSet(AUTH_TOKEN_KEY, token);
     return;
   }
-  localStorage.removeItem(AUTH_TOKEN_KEY);
+  safeLocalStorageRemove(AUTH_TOKEN_KEY);
 }
 
 function withAuthHeaders(headers = {}) {

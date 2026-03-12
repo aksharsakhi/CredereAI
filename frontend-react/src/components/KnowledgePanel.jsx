@@ -1,28 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { getKnowledgeHubResponse, getDocuments } from '../api/client';
 
+function readStoredJson(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStoredJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage failures so the panel still works without persistence.
+  }
+}
+
 export default function KnowledgePanel() {
   const [query, setQuery] = useState('');
-  const [chat, setChat] = useState(() => {
-    const saved = localStorage.getItem('credere_knowledge_chat');
-    return saved ? JSON.parse(saved) : [
-      { role: 'assistant', text: 'Hello! I am the Credere AI Knowledge Bot. I have indexed all uploaded documents and research memos. How can I help you today?', sources: [] }
-    ];
-  });
-  const [history, setHistory] = useState(() => {
-    const saved = localStorage.getItem('credere_knowledge_history');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [chat, setChat] = useState(() => readStoredJson('credere_knowledge_chat', [
+    { role: 'assistant', text: 'Hello! I am the Credere AI Knowledge Bot. I have indexed all uploaded documents and research memos. How can I help you today?', sources: [] }
+  ]));
+  const [history, setHistory] = useState(() => readStoredJson('credere_knowledge_history', []));
   const [searching, setSearching] = useState(false);
   const [indexedDocs, setIndexedDocs] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('credere_knowledge_chat', JSON.stringify(chat));
+    writeStoredJson('credere_knowledge_chat', chat);
   }, [chat]);
 
   useEffect(() => {
-    localStorage.setItem('credere_knowledge_history', JSON.stringify(history));
+    writeStoredJson('credere_knowledge_history', history);
   }, [history]);
 
   useEffect(() => {

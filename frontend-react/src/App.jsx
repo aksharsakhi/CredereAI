@@ -16,6 +16,23 @@ import {
   updateSystemLlmProviderSettings,
 } from './api/client';
 
+function safeStorageGet(key, fallback = null) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures so the UI keeps working in restricted browsers.
+  }
+}
+
 export default function App() {
   const [active, setActive] = useState('module1');
   const [llmSettings, setLlmSettings] = useState({
@@ -27,8 +44,8 @@ export default function App() {
       groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
     },
   });
-  const [theme, setTheme] = useState(() => localStorage.getItem('credere_theme') || 'dark');
-  const [started, setStarted] = useState(() => localStorage.getItem('credere_started') === 'true');
+  const [theme, setTheme] = useState(() => safeStorageGet('credere_theme', 'dark') || 'dark');
+  const [started, setStarted] = useState(() => safeStorageGet('credere_started', 'false') === 'true');
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -73,11 +90,11 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('credere_theme', theme);
+    safeStorageSet('credere_theme', theme);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('credere_started', started ? 'true' : 'false');
+    safeStorageSet('credere_started', started ? 'true' : 'false');
   }, [started]);
 
   if (!started) {
