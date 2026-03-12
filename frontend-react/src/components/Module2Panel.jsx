@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   getModule1DataForResearch,
-  runResearch,
+  runResearchAsync,
+  getResearchAsyncStatus,
   runResearchFromModule1,
   createModule2CaseFromResearch,
   listModule2Cases,
@@ -16,6 +17,13 @@ import {
   runModule2EscalationSweep,
   getModule2DecisionPack,
 } from '../api/client';
+
+const RESEARCH_POLL_INTERVAL_MS = 3000;
+const RESEARCH_POLL_TIMEOUT_MS = 10 * 60 * 1000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default function Module2Panel() {
   const [companyName, setCompanyName] = useState('');
@@ -74,9 +82,33 @@ export default function Module2Panel() {
           .map((d) => d.trim())
           .filter(Boolean),
       };
-      const data = await runResearch(payload);
-      setReport(data?.report || null);
-      setHistory((prev) => [{ companyName, cin, industry, at: new Date().toISOString() }, ...prev].slice(0, 5));
+
+      // Long-running scans are executed asynchronously to avoid network timeouts.
+      const submitted = await runResearchAsync(payload);
+      const jobId = submitted?.jobId;
+      if (!jobId) {
+        throw new Error('Failed to start intelligence scan. Please retry.');
+      }
+
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < RESEARCH_POLL_TIMEOUT_MS) {
+        const status = await getResearchAsyncStatus(jobId);
+        const currentStatus = String(status?.status || '').toUpperCase();
+
+        if (currentStatus === 'COMPLETED') {
+          setReport(status?.report || null);
+          setHistory((prev) => [{ companyName, cin, industry, at: new Date().toISOString() }, ...prev].slice(0, 5));
+          return;
+        }
+
+        if (currentStatus === 'FAILED') {
+          throw new Error(status?.error || 'Research scan failed.');
+        }
+
+        await sleep(RESEARCH_POLL_INTERVAL_MS);
+      }
+
+      throw new Error('Research scan is taking longer than expected. Please check again in a moment.');
     } catch (err) {
       setError(err.message);
     } finally {
