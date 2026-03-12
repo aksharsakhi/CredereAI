@@ -148,14 +148,34 @@ export default function IntroPage({ onGetStarted }) {
           </p>
           <div className="hp-hero-ctas">
             <button className="hp-btn hp-btn-primary" onClick={onGetStarted}>Enter Workspace</button>
-            <button className="hp-btn hp-btn-ghost" onClick={() => document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' })}>
-              Explore Platform ↓
+            <button className="hp-btn hp-btn-ghost" onClick={() => document.getElementById('demo-video')?.scrollIntoView({ behavior: 'smooth' })}>
+              ▶ Watch Demo
             </button>
           </div>
           <div className="hp-trust-row">
             <span>✔ Financial Document Analysis</span>
             <span>✔ Promoter & Litigation Intelligence</span>
             <span>✔ Evidence-Grounded AI Recommendations</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Video */}
+      <section className="hp-section hp-reveal" id="demo-video">
+        <div className="hp-contain hp-center">
+          <p className="hp-kicker">See It In Action</p>
+          <h2 className="hp-section-title">Watch Credere AI Work</h2>
+          <p className="hp-section-sub" style={{ margin: '0 auto 32px' }}>
+            From document upload to credit decision — watch the full workflow in under 3 minutes.
+          </p>
+          <div className="hp-video-wrap">
+            <iframe
+              src="https://drive.google.com/file/d/1UaqxdGIYJWDyXdq_Hina9SpBy7M2G7Oz/preview"
+              className="hp-video-player"
+              title="Credere AI Demo"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
           </div>
         </div>
       </section>
