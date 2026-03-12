@@ -22,7 +22,6 @@ services:
     name: credere-frontend
     runtime: static
     plan: free
-    region: singapore
     buildCommand: cd frontend-react && npm install && npm run build
     staticPublishPath: frontend-react/dist
     envVars:
