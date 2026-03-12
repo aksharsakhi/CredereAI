@@ -42,6 +42,10 @@ export default function Module1Panel({ user }) {
   const [reviewNotes, setReviewNotes] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
+  function toDocumentList(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
   async function refresh() {
     const [docs, comp, dash, uw, ent, wf] = await Promise.all([
       getDocuments(),
@@ -51,7 +55,7 @@ export default function Module1Panel({ user }) {
       getEnterpriseAssessment(),
       getReviewWorkflow(),
     ]);
-    setDocuments(docs || []);
+    setDocuments(toDocumentList(docs));
     setCompleteness(comp?.completeness || null);
     setDashboard(dash || null);
     setUnderwriting(uw || null);
@@ -174,7 +178,8 @@ export default function Module1Panel({ user }) {
   const criticalGapCount = (dashboard?.missingCriticalFields || []).length;
   const riskSignals = Object.values(dashboard?.riskBreakdown || {}).reduce((a, b) => a + b, 0);
   const workflowStage = completenessScore >= 70 ? 'Research Ready' : completenessScore >= 40 ? 'Needs More Docs' : 'Early Intake';
-  const documentCategoryCounts = documents.reduce((acc, doc) => {
+  const safeDocuments = Array.isArray(documents) ? documents : [];
+  const documentCategoryCounts = safeDocuments.reduce((acc, doc) => {
     acc[doc.category] = (acc[doc.category] || 0) + 1;
     return acc;
   }, {});
@@ -272,9 +277,9 @@ export default function Module1Panel({ user }) {
 
           <div className="card">
             <h3 style={{marginBottom: '1rem'}}>Indexed Assets</h3>
-            {documents.length === 0 ? <p className="muted-note">No documents present in current session.</p> : null}
+            {safeDocuments.length === 0 ? <p className="muted-note">No documents present in current session.</p> : null}
             <div style={{display: 'grid', gap: '10px'}}>
-              {documents.slice(0, 8).map((d) => (
+              {safeDocuments.slice(0, 8).map((d) => (
                 <div key={d.id} className="list-row" style={{padding: '12px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)'}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                     <div style={{width: 32, height: 32, borderRadius: '8px', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)'}}>
@@ -479,7 +484,7 @@ export default function Module1Panel({ user }) {
                 <h3>Extraction Reliability</h3>
                 <p className="ratio-value">{confidence == null ? 'N/A' : `${(confidence * 100).toFixed(0)}%`}</p>
                 <p>Average confidence from consolidated evidence and parser/LLM agreement.</p>
-                <p>Evidence Sources: {consolidated.sourceCount || documents.length}</p>
+                <p>Evidence Sources: {consolidated.sourceCount || safeDocuments.length}</p>
               </div>
               <div className="card">
                 <h3>Reliability Warnings</h3>
