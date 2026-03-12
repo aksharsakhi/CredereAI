@@ -69,7 +69,7 @@ export default function SettingsPanel({
               {user?.role || 'CREDIT_ADMIN'}
             </p>
           </div>
-          <button className="primary" onClick={onLogout} style={{background: 'var(--danger)', border: 'none'}}>Sign Out</button>
+          <button className="primary action-btn action-btn-danger" onClick={onLogout}>Sign Out</button>
         </div>
         <div style={{marginTop: '1.5rem', display: 'flex', gap: '1rem'}}>
            <div style={{padding: '10px 16px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', flex: 1}}>
@@ -91,7 +91,7 @@ export default function SettingsPanel({
           <span className="chip chip-low">Internal Release 4.2.0</span>
         </div>
         <div className="actions" style={{ marginTop: '1rem' }}>
-          <button className="secondary" onClick={onGoHome}>Switch Workspace Context</button>
+          <button className="secondary action-btn action-btn-inline" onClick={onGoHome}>Switch Workspace Context</button>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ export default function SettingsPanel({
           </label>
         </div>
         <div className="actions">
-          <button type="button" onClick={handleSaveLlm} disabled={saving || !selectedModel}>
+          <button type="button" className="primary action-btn action-btn-primary" onClick={handleSaveLlm} disabled={saving || !selectedModel}>
             {saving ? 'Saving...' : 'Save LLM Settings'}
           </button>
         </div>

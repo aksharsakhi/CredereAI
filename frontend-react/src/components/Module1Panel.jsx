@@ -205,11 +205,11 @@ export default function Module1Panel({ user }) {
           <p className="muted-note">High-fidelity extraction and automated fraud detection for enterprise credit assets.</p>
         </div>
         <div className="actions">
-          <button onClick={handleFullAnalysis} disabled={loading} className="primary">
+          <button onClick={handleFullAnalysis} disabled={loading} className="primary action-btn action-btn-primary">
             {loading ? 'Analyzing...' : 'Run Full Synthesis'}
           </button>
-          <button className="secondary" onClick={refresh} disabled={loading}>Refresh All</button>
-          <button className="secondary" onClick={handleReset} disabled={loading}>Reset</button>
+          <button className="secondary action-btn action-btn-inline" onClick={refresh} disabled={loading}>Refresh All</button>
+          <button className="secondary action-btn action-btn-inline action-btn-danger-soft" onClick={handleReset} disabled={loading}>Reset</button>
         </div>
       </div>
 
@@ -260,7 +260,7 @@ export default function Module1Panel({ user }) {
                 </div>
               </div>
 
-              <button type="submit" disabled={!file || loading} className="full-width primary" style={{marginTop: '12px', padding: '14px'}}>
+              <button type="submit" disabled={!file || loading} className="full-width primary action-btn action-btn-primary" style={{marginTop: '12px'}}>
                 {loading ? 'Executing Pipeline...' : 'Process Document'}
               </button>
             </form>
