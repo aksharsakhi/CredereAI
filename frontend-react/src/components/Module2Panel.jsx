@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   getModule1DataForResearch,
   runResearchAsync,
@@ -20,32 +20,101 @@ import {
 
 const RESEARCH_POLL_INTERVAL_MS = 3000;
 const RESEARCH_POLL_TIMEOUT_MS = 10 * 60 * 1000;
+const MODULE2_STORAGE_KEY = 'credere_module2_state';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function readStoredState() {
+  try {
+    const raw = localStorage.getItem(MODULE2_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredState(value) {
+  try {
+    localStorage.setItem(MODULE2_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // Ignore storage failures so the workbench remains usable.
+  }
+}
+
 export default function Module2Panel() {
-  const [companyName, setCompanyName] = useState('');
-  const [cin, setCin] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [promoters, setPromoters] = useState('');
-  const [directors, setDirectors] = useState('');
-  const [report, setReport] = useState(null);
+  const initialStoredState = readStoredState();
+  const [companyName, setCompanyName] = useState(initialStoredState?.companyName || '');
+  const [cin, setCin] = useState(initialStoredState?.cin || '');
+  const [industry, setIndustry] = useState(initialStoredState?.industry || '');
+  const [promoters, setPromoters] = useState(initialStoredState?.promoters || '');
+  const [directors, setDirectors] = useState(initialStoredState?.directors || '');
+  const [report, setReport] = useState(initialStoredState?.report || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [history, setHistory] = useState([]);
-  const [siteVisitNotes, setSiteVisitNotes] = useState('');
-  const [managementNotes, setManagementNotes] = useState('');
-  const [collateralNotes, setCollateralNotes] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
-  const [cases, setCases] = useState([]);
+  const [history, setHistory] = useState(Array.isArray(initialStoredState?.history) ? initialStoredState.history : []);
+  const [siteVisitNotes, setSiteVisitNotes] = useState(initialStoredState?.siteVisitNotes || '');
+  const [managementNotes, setManagementNotes] = useState(initialStoredState?.managementNotes || '');
+  const [collateralNotes, setCollateralNotes] = useState(initialStoredState?.collateralNotes || '');
+  const [activeTab, setActiveTab] = useState(initialStoredState?.activeTab || 'overview');
+  const [cases, setCases] = useState(Array.isArray(initialStoredState?.cases) ? initialStoredState.cases : []);
   const [selectedCase, setSelectedCase] = useState(null);
-  const [auditRows, setAuditRows] = useState([]);
-  const [auditVerification, setAuditVerification] = useState(null);
-  const [overdueActions, setOverdueActions] = useState([]);
-  const [decisionPack, setDecisionPack] = useState(null);
+  const [auditRows, setAuditRows] = useState(Array.isArray(initialStoredState?.auditRows) ? initialStoredState.auditRows : []);
+  const [auditVerification, setAuditVerification] = useState(initialStoredState?.auditVerification || null);
+  const [overdueActions, setOverdueActions] = useState(Array.isArray(initialStoredState?.overdueActions) ? initialStoredState.overdueActions : []);
+  const [decisionPack, setDecisionPack] = useState(initialStoredState?.decisionPack || null);
   const [caseMsg, setCaseMsg] = useState('');
+
+  useEffect(() => {
+    writeStoredState({
+      companyName,
+      cin,
+      industry,
+      promoters,
+      directors,
+      report,
+      history,
+      siteVisitNotes,
+      managementNotes,
+      collateralNotes,
+      activeTab,
+      cases,
+      auditRows,
+      auditVerification,
+      overdueActions,
+      decisionPack,
+      selectedCaseId: selectedCase?.caseId || initialStoredState?.selectedCaseId || null,
+    });
+  }, [
+    companyName,
+    cin,
+    industry,
+    promoters,
+    directors,
+    report,
+    history,
+    siteVisitNotes,
+    managementNotes,
+    collateralNotes,
+    activeTab,
+    cases,
+    auditRows,
+    auditVerification,
+    overdueActions,
+    decisionPack,
+    selectedCase,
+    initialStoredState?.selectedCaseId,
+  ]);
+
+  useEffect(() => {
+    const savedCaseId = initialStoredState?.selectedCaseId;
+    if (savedCaseId || cases.length > 0) {
+      refreshCaseWorkbench(savedCaseId).catch(() => {
+        // Keep stored state visible even if the refresh fails.
+      });
+    }
+  }, []);
 
   async function autofillFromModule1() {
     setLoading(true);
@@ -284,11 +353,11 @@ export default function Module2Panel() {
                 <span className="chip chip-ok" style={{fontSize: '9px'}}>Deep Search Active</span>
               </div>
               <div className="module2-action-row" style={{marginTop: '12px'}}>
-                <button type="button" className="secondary action-btn" onClick={autofillFromModule1} disabled={loading} style={{fontSize: '11px', flex: 1}}>
+                <button type="button" className="secondary action-btn action-btn-compact" onClick={autofillFromModule1} disabled={loading}>
                   <span>⚡ Autofill</span>
                   <small>Link intake context</small>
                 </button>
-                <button type="button" className="secondary action-btn" onClick={handleRunFromModule1} disabled={loading} style={{fontSize: '11px', flex: 1}}>
+                <button type="button" className="secondary action-btn action-btn-compact" onClick={handleRunFromModule1} disabled={loading}>
                   <span>🚀 Full Pipeline</span>
                   <small>Cross-module scan</small>
                 </button>
@@ -344,7 +413,7 @@ export default function Module2Panel() {
             </div>
 
             <div className="actions full-width" style={{marginTop: '12px'}}>
-              <button type="submit" disabled={loading} className="primary full-width" style={{padding: '14px'}}>
+              <button type="submit" disabled={loading} className="primary full-width action-btn action-btn-primary">
                 {loading ? 'Synthesizing Neural Intelligence...' : 'Execute Intelligence Scan'}
               </button>
             </div>
@@ -360,7 +429,7 @@ export default function Module2Panel() {
                   <div key={`${h.companyName}-${h.at}-${idx}`} className="list-row">
                     <span>{h.companyName}</span>
                     <button
-                      className="secondary"
+                      className="secondary action-btn action-btn-inline"
                       onClick={() => {
                         setCompanyName(h.companyName || '');
                         setCin(h.cin || '');
@@ -721,9 +790,9 @@ export default function Module2Panel() {
                 <div className="ratio-head" style={{marginBottom: '1.25rem'}}>
                    <h3 style={{margin: 0, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em'}}>Ops Workbench: {selectedCase?.caseId || 'Awaiting Selection'}</h3>
                    <div className="actions" style={{gap: '8px'}}>
-                     <button type="button" className="secondary" onClick={handleEscalationSweep} disabled={loading} style={{padding: '8px 12px', fontSize: '11px'}}>⚡ SLA Sweep</button>
-                     <button type="button" className="secondary" onClick={() => refreshCaseWorkbench(selectedCase?.caseId)} disabled={loading} style={{padding: '8px 12px', fontSize: '11px'}}>🔄 Synch</button>
-                     <button type="button" onClick={handleCreateCaseFromCurrentResearch} disabled={loading} style={{padding: '8px 16px', fontSize: '11px', background: 'var(--brand)', color: 'white'}}>Initiate Case</button>
+                     <button type="button" className="secondary action-btn action-btn-inline" onClick={handleEscalationSweep} disabled={loading}>⚡ SLA Sweep</button>
+                     <button type="button" className="secondary action-btn action-btn-inline" onClick={() => refreshCaseWorkbench(selectedCase?.caseId)} disabled={loading}>🔄 Synch</button>
+                     <button type="button" className="primary action-btn action-btn-inline" onClick={handleCreateCaseFromCurrentResearch} disabled={loading}>Initiate Case</button>
                    </div>
                 </div>
 
@@ -772,11 +841,11 @@ export default function Module2Panel() {
                           <span className="chip chip-ok">Verified Status</span>
                        </div>
                        <div className="actions" style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                          <button type="button" className="secondary" onClick={() => handleTransitionCase('UNDER_REVIEW')} disabled={loading || !selectedCase} style={{flex: 1}}>Move to Review</button>
-                          <button type="button" className="secondary" onClick={() => handleTransitionCase('ESCALATED')} disabled={loading || !selectedCase} style={{flex: 1}}>Escalate</button>
-                          <button type="button" className="secondary" onClick={handleAssignAction} disabled={loading || !selectedCase} style={{flex: 1}}>Assign Task</button>
-                          <button type="button" className="secondary" onClick={handleAddEvidence} disabled={loading || !selectedCase} style={{flex: 1, color: 'var(--brand)'}}>+ Evidence</button>
-                          <button type="button" onClick={handleRecordDecision} disabled={loading || !selectedCase} style={{flex: '1 0 100%', marginTop: '8px'}}>Apply Credit Decision</button>
+                            <button type="button" className="secondary action-btn action-btn-inline" onClick={() => handleTransitionCase('UNDER_REVIEW')} disabled={loading || !selectedCase} style={{flex: 1}}>Move to Review</button>
+                            <button type="button" className="secondary action-btn action-btn-inline" onClick={() => handleTransitionCase('ESCALATED')} disabled={loading || !selectedCase} style={{flex: 1}}>Escalate</button>
+                            <button type="button" className="secondary action-btn action-btn-inline" onClick={handleAssignAction} disabled={loading || !selectedCase} style={{flex: 1}}>Assign Task</button>
+                            <button type="button" className="secondary action-btn action-btn-inline" onClick={handleAddEvidence} disabled={loading || !selectedCase} style={{flex: 1, color: 'var(--brand)'}}>+ Evidence</button>
+                            <button type="button" className="primary action-btn action-btn-inline" onClick={handleRecordDecision} disabled={loading || !selectedCase} style={{flex: '1 0 100%', marginTop: '8px'}}>Apply Credit Decision</button>
                        </div>
                     </div>
 

@@ -545,12 +545,76 @@ button {
   border-color: color-mix(in srgb, var(--brand) 65%, var(--line));
   color: #fff;
   font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--brand) 65%, var(--line));
+  border-radius: 14px;
+  min-height: 42px;
+  padding: 11px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--brand) 28%, transparent);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 button.secondary {
   background: color-mix(in srgb, var(--surface) 76%, var(--bg-alt));
   border-color: color-mix(in srgb, var(--line) 65%, var(--brand));
   color: color-mix(in srgb, var(--text) 90%, var(--brand));
+  box-shadow: 0 8px 20px rgba(20, 32, 51, 0.06);
+}
+
+.action-btn {
+  border-radius: 16px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.action-btn-primary {
+  min-height: 46px;
+  padding: 12px 18px;
+}
+
+.action-btn-inline {
+  min-height: 38px;
+  padding: 9px 14px;
+  font-size: 11px;
+}
+
+.action-btn-compact {
+  min-height: 58px;
+  flex: 1;
+  font-size: 11px;
+}
+
+.action-btn-compact small {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.78;
+}
+
+.action-btn-danger {
+  background: linear-gradient(135deg, #8f2637, #cf4d5d);
+  border-color: color-mix(in srgb, var(--danger) 70%, #f3b1b1);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+.action-btn-danger-soft {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+  color: color-mix(in srgb, var(--danger) 70%, var(--text));
 }
 
 .actions {

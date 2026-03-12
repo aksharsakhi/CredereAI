@@ -55,7 +55,7 @@ export default function PortfolioPanel() {
     <div className="module2-empty-state">
       <h4 className="error">Analytics Offline</h4>
       <p>{error}</p>
-      <button className="secondary" style={{marginTop: '1rem'}} onClick={fetchData}>Retry</button>
+      <button className="secondary action-btn action-btn-inline" style={{marginTop: '1rem'}} onClick={fetchData}>Retry</button>
     </div>
   );
 
@@ -67,8 +67,8 @@ export default function PortfolioPanel() {
           <p className="muted-note">Real-time aggregate exposure oversight and risk concentration mapping.</p>
         </div>
         <div className="actions">
-          <button className="secondary">Risk Register (CSV)</button>
-          <button className="primary" onClick={fetchData}>Refresh Engine</button>
+          <button className="secondary action-btn action-btn-inline">Risk Register (CSV)</button>
+          <button className="primary action-btn action-btn-primary" onClick={fetchData}>Refresh Engine</button>
         </div>
       </div>
 
