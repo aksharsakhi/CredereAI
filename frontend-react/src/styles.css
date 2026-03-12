@@ -139,9 +139,58 @@ body {
 .side-subtitle {
   margin: 8px 0 20px;
   color: #cde8ff;
-  font-size: 12px;
-  letter-spacing: 0.09em;
+  font-size: 11px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.side-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 24px 0 10px 4px;
+  font-weight: 800;
+}
+
+.sidebar-main-box {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.sidebar-main-box::after {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.sidebar-main-box .nav-btn {
+  margin-bottom: 0;
+  background: transparent;
+  border-color: transparent;
+}
+
+.sidebar-main-box .nav-btn.active {
+  background: #f4fbff;
+  color: #0c4e77;
+}
+
+.sidebar-main-box .nav-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-btn {

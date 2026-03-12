@@ -5,24 +5,29 @@ export default function Sidebar({ active, onChange, user, onLogout }) {
     <aside className="sidebar">
       <div className="brand">Credere AI</div>
       <p className="side-subtitle">Corporate Credit Decisioning Engine</p>
-      <button
-        className={active === 'module1' ? 'nav-btn active' : 'nav-btn'}
-        onClick={() => onChange('module1')}
-      >
-        Financial Intake
-      </button>
-      <button
-        className={active === 'module2' ? 'nav-btn active' : 'nav-btn'}
-        onClick={() => onChange('module2')}
-      >
-        Credit Intelligence
-      </button>
-      <button
-        className={active === 'module3' ? 'nav-btn active' : 'nav-btn'}
-        onClick={() => onChange('module3')}
-      >
-        Decision Studio
-      </button>
+      <div className="side-section-title">Core Workspaces</div>
+      <div className="sidebar-main-box">
+        <button
+          className={active === 'module1' ? 'nav-btn active' : 'nav-btn'}
+          onClick={() => onChange('module1')}
+        >
+          Financial Intake
+        </button>
+        <button
+          className={active === 'module2' ? 'nav-btn active' : 'nav-btn'}
+          onClick={() => onChange('module2')}
+        >
+          Credit Intelligence
+        </button>
+        <button
+          className={active === 'module3' ? 'nav-btn active' : 'nav-btn'}
+          onClick={() => onChange('module3')}
+        >
+          Decision Studio
+        </button>
+      </div>
+
+      <div className="side-section-title">Intelligence & Analysis</div>
       <button
         className={active === 'portfolio' ? 'nav-btn active' : 'nav-btn'}
         onClick={() => onChange('portfolio')}
@@ -47,14 +52,9 @@ export default function Sidebar({ active, onChange, user, onLogout }) {
       >
         Settings
       </button>
-      <div className="sidebar-user">
-        <strong>{user?.fullName || user?.username}</strong>
-        <p>{user?.role || 'BANK_USER'}</p>
-        <button className="secondary" onClick={onLogout}>Sign Out</button>
-      </div>
       <div className="sidebar-note">
-        <strong>Target Output</strong>
-        <p>Comprehensive CAM with explainable risk, limit, and pricing recommendation.</p>
+        <strong>Status</strong>
+        <p>Operational grounded in real-time extraction and analysis.</p>
       </div>
     </aside>
   );

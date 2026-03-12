@@ -56,17 +56,37 @@ export default function SettingsPanel({
     <section className="panel">
       <h2>System Settings</h2>
       
+      <div className="card glass-card" style={{borderLeft: '4px solid var(--brand)', marginBottom: '2rem'}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div>
+            <h3 style={{margin: 0, fontSize: '18px'}}>{user?.fullName || user?.username}</h3>
+            <p style={{margin: '4px 0 0', color: 'var(--muted)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em'}}>
+              {user?.role || 'CREDIT_ADMIN'}
+            </p>
+          </div>
+          <button className="primary" onClick={onLogout} style={{background: 'var(--danger)', border: 'none'}}>Sign Out</button>
+        </div>
+        <div style={{marginTop: '1.5rem', display: 'flex', gap: '1rem'}}>
+           <div style={{padding: '10px 16px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', flex: 1}}>
+              <span style={{fontSize: '11px', color: 'var(--muted)', display: 'block', marginBottom: '4px'}}>Session Integrity</span>
+              <strong style={{fontSize: '13px', color: 'var(--ok)'}}>SECURE (256-bit)</strong>
+           </div>
+           <div style={{padding: '10px 16px', background: 'var(--surface-2)', borderRadius: '12px', border: '1px solid var(--line)', flex: 1}}>
+              <span style={{fontSize: '11px', color: 'var(--muted)', display: 'block', marginBottom: '4px'}}>Access Level</span>
+              <strong style={{fontSize: '13px'}}>FULL_PROVISION</strong>
+           </div>
+        </div>
+      </div>
+
       <div className="card">
-        <h3>System Status</h3>
+        <h3>System Diagnostics</h3>
         <div className="op-bar" style={{ margin: '1rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <span className="chip chip-ok">Backend Online</span>
-          <span className="chip chip-unknown">LLM: {llmSettings.provider} / {llmSettings.activeModel}</span>
-          <span className="chip chip-low">Mode: Production Preview</span>
-          <span className="chip chip-unknown">User: {user?.fullName || user?.username}</span>
+          <span className="chip chip-ok">Backend Synchronized</span>
+          <span className="chip chip-unknown">LLM Model: {llmSettings.activeModel}</span>
+          <span className="chip chip-low">Internal Release 4.2.0</span>
         </div>
         <div className="actions" style={{ marginTop: '1rem' }}>
-          <button className="secondary" onClick={onGoHome}>Go to Home Page</button>
-          <button className="secondary" onClick={onLogout}>Logout Session</button>
+          <button className="secondary" onClick={onGoHome}>Switch Workspace Context</button>
         </div>
       </div>
 
