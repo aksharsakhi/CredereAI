@@ -74,10 +74,7 @@ function buildCandidateApiBases() {
   // Cloudflare Pages serves static assets and does not expose backend /api routes.
   // If runtime/build env var is missing, force known hosted backend first.
   if (isCloudflarePages) {
-    return Array.from(new Set([
-      normalizeBase(hostedFallback),
-      normalizeBase(fromOrigin),
-    ]));
+    return [normalizeBase(hostedFallback)];
   }
 
   // On packaged/backend-served UI, prefer same-origin API first.
